@@ -1,0 +1,16 @@
+# Bytecode & compiled classes
+bin/
+*.class
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE configuration
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
