@@ -70,6 +70,21 @@
     "batch": "2024-2028 (CS4)"
   },
   {
+    "id": "USR-STU-7DE38B7A",
+    "username": "test_user_46750",
+    "passwordHash": "d7UR72ZfkzRXJoS3KkE+EJ/7gCAk82LdxfXRgZNQmt4=",
+    "salt": "YXaUGG+yucBx41d6ilLa4Q==",
+    "fullName": "Ragendu M",
+    "email": "test_user_46750@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-21T19:39:06.759+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-FAC-001",
     "username": "faculty_cs",
     "passwordHash": "ZORvU5+CSc5KwynvpLNHN4OLFXC+Ubiv5V6wFm1qYok=",

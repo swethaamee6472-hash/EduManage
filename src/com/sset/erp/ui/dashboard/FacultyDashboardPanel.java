@@ -111,7 +111,7 @@ public class FacultyDashboardPanel extends JPanel {
 
     private JPanel createModuleCard(String title, String desc, String badge, String icon) {
         JPanel p = new JPanel(new BorderLayout(12, 0));
-        p.setBackground(new Color(17, 23, 35));
+        p.setBackground(UITheme.CARD_BG_HOVER);
         p.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UITheme.BORDER, 1),
             new EmptyBorder(12, 14, 12, 14)

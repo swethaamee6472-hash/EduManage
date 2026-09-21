@@ -42,7 +42,7 @@ public class ModernCard extends JPanel {
 
         // Dark ambient shadow
         if (drawShadow) {
-            g2.setColor(new Color(0, 0, 0, 80));
+            g2.setColor(new Color(0, 0, 0, 15)); // Lighter shadow for light theme
             g2.fillRoundRect(2, 4, width - 4, height - 4, cornerRadius + 2, cornerRadius + 2);
         }
 

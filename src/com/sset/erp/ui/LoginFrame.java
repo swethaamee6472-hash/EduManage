@@ -52,10 +52,10 @@ public class LoginFrame extends JFrame {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 UITheme.applyQualityRendering(g2);
-                // Subtle gradient background
+                // Vibrant Blue gradient for brand panel
                 GradientPaint gp = new GradientPaint(
-                    0, 0, new Color(15, 23, 42),
-                    getWidth(), getHeight(), new Color(30, 41, 59)
+                    0, 0, new Color(30, 64, 175), // Blue 800
+                    getWidth(), getHeight(), new Color(59, 130, 246) // Blue 500
                 );
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
@@ -115,7 +115,7 @@ public class LoginFrame extends JFrame {
     private JLabel createFeatureItem(String text) {
         JLabel l = new JLabel(text);
         l.setFont(UITheme.FONT_BODY);
-        l.setForeground(new Color(226, 232, 240));
+        l.setForeground(new Color(241, 245, 249)); // Slate 100
         return l;
     }
 
@@ -208,13 +208,13 @@ public class LoginFrame extends JFrame {
     private JButton createDemoButton(String label, String username, String password) {
         JButton btn = new JButton(label);
         btn.setFont(UITheme.FONT_BADGE);
-        btn.setForeground(UITheme.ACCENT_CYAN);
-        btn.setBackground(new Color(24, 32, 48));
+        btn.setForeground(UITheme.PRIMARY);
+        btn.setBackground(new Color(241, 245, 249)); // Slate 100
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(49, 134, 255, 100), 1),
+            BorderFactory.createLineBorder(UITheme.BORDER, 1),
             new EmptyBorder(5, 12, 5, 12)
         ));
         btn.addActionListener(e -> {
