@@ -88,7 +88,7 @@ public class RegisterDialog extends JDialog {
         // Common Fields
         txtFullName = new ModernTextField("e.g. Ragendu M");
         txtUsername = new ModernTextField("e.g. ragendu_m");
-        txtEmail = new ModernTextField("e.g. ragendu@edumanage.edu");
+        txtEmail = new ModernTextField("e.g. username@gmail.com");
         txtPassword = new ModernPasswordField("Minimum 6 characters");
 
         cmbRole = new JComboBox<>(Role.values());

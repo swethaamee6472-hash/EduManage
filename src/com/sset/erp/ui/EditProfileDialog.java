@@ -129,8 +129,14 @@ public class EditProfileDialog extends JDialog {
     }
 
     private void handleSave() {
-        if (txtFullName.getText().trim().isEmpty() || txtEmail.getText().trim().isEmpty()) {
+        String email = txtEmail.getText().trim();
+        if (txtFullName.getText().trim().isEmpty() || email.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Full Name and Email are required fields.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!email.toLowerCase().matches("^[a-zA-Z0-9._%+-]+@gmail\\.com$")) {
+            JOptionPane.showMessageDialog(this, "Only valid Gmail addresses (ending in @gmail.com) are accepted.", "Validation Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 

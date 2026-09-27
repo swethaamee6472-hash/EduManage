@@ -164,9 +164,6 @@ public class LoginFrame extends JFrame {
         ModernButton btnLogin = new ModernButton("Sign In to Portal", ModernButton.Variant.PRIMARY);
         btnLogin.addActionListener(e -> handleLogin());
 
-        ModernButton btnRegister = new ModernButton("Register New Account", ModernButton.Variant.OUTLINE);
-        btnRegister.addActionListener(e -> openRegisterDialog());
-
         form.add(title);
         form.add(Box.createVerticalStrut(4));
         form.add(subtitle);
@@ -187,8 +184,6 @@ public class LoginFrame extends JFrame {
         form.add(Box.createVerticalStrut(14));
 
         form.add(btnLogin);
-        form.add(Box.createVerticalStrut(10));
-        form.add(btnRegister);
 
         // Enter key listener for instant login
         txtUsername.addActionListener(e -> handleLogin());
@@ -242,10 +237,5 @@ public class LoginFrame extends JFrame {
             lblStatus.setText("⚠️ " + result.getMessage());
             txtPassword.setText("");
         }
-    }
-
-    private void openRegisterDialog() {
-        RegisterDialog dialog = new RegisterDialog(this, authService);
-        dialog.setVisible(true);
     }
 }
