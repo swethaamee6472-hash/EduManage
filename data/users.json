@@ -43,6 +43,21 @@
     "batch": "2024-2028 (CS4)"
   },
   {
+    "id": "USR-STU-91FC004B",
+    "username": "test_user_74526",
+    "passwordHash": "uC/zxdTXWSymokYgzgtOrfkbuLyCAeMrXYfxVsd8qJM=",
+    "salt": "+0xbWX5mKLP1ta2Y5O7fuA==",
+    "fullName": "Ragendu M",
+    "email": "test_user_74526@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-28T11:21:14.528+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-ADM-001",
     "username": "admin",
     "passwordHash": "VSx3t/m0bWKk35rIFb2NhCj2jOLe/8AFETGJd91rPns=",
@@ -55,6 +70,21 @@
     "adminLevel": "System Administrator"
   },
   {
+    "id": "USR-STU-9F427871",
+    "username": "test_user_30460",
+    "passwordHash": "4lqZzjrDAFO7sh1Ww3Mr0/boPTpyzMR2XdQ8UVX0NdY=",
+    "salt": "snS48bQFoD4etAPcyIKt5Q==",
+    "fullName": "Ragendu M",
+    "email": "test_user_30460@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-28T11:23:50.461+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-STU-2BD3CB56",
     "username": "test_user_46661",
     "passwordHash": "dqma5Iwj4hKAMg5fwdVigLQwOWMpvq0yvegavf6bnIA=",
@@ -64,6 +94,21 @@
     "role": "STUDENT",
     "active": true,
     "createdAt": "2026-09-12T15:04:06.664+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
+    "id": "USR-STU-1C9091AD",
+    "username": "test_user_18489",
+    "passwordHash": "NXMz7ZwTiPbHCsAFkSjcr1Dr/HKwI2r0UwAxvQzb+7k=",
+    "salt": "3bfwMQS+slrJTY8Pa+9C2Q==",
+    "fullName": "Ragendu M",
+    "email": "test_user_18489@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-28T11:21:58.491+0530",
     "rollNumber": "SSET24CS015",
     "department": "Computer Science & Engineering",
     "semester": 3,

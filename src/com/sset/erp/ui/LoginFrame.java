@@ -12,8 +12,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Modern Login Window for the Student Data Management ERP System.
- * Features institutional branding, demo quick-fill buttons, and responsive inputs.
+ * Simplified Single-Frame Login Window for EduManage ERP.
+ * Follows standard Swing JFrame inheritance with a compact, centered single-window layout.
  */
 public class LoginFrame extends JFrame {
     private final AuthService authService;
@@ -28,194 +28,118 @@ public class LoginFrame extends JFrame {
     }
 
     private void initUI() {
-        setTitle("EduManage - Student Data Management System");
-        setSize(960, 620);
-        setMinimumSize(new Dimension(880, 560));
+        // Frame Configuration
+        setTitle("EduManage - Login");
+        setSize(440, 560);
+        setMinimumSize(new Dimension(400, 520));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(1, 2));
 
-        // Left Panel: Institution Brand Banner
-        JPanel brandPanel = createBrandPanel();
+        // Main Container Panel with clean padding
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(UITheme.BG_LIGHT);
+        mainPanel.setBorder(new EmptyBorder(32, 36, 32, 36));
 
-        // Right Panel: Authentication Form
-        JPanel formPanel = createFormPanel();
+        // Header Title
+        JLabel lblHeader = new JLabel("EduManage Portal");
+        lblHeader.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblHeader.setForeground(UITheme.TEXT_PRIMARY);
+        lblHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        add(brandPanel);
-        add(formPanel);
-    }
+        JLabel lblSubHeader = new JLabel("Sign in to your account");
+        lblSubHeader.setFont(UITheme.FONT_BODY);
+        lblSubHeader.setForeground(UITheme.TEXT_SECONDARY);
+        lblSubHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-    private JPanel createBrandPanel() {
-        JPanel panel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                UITheme.applyQualityRendering(g2);
-                // Subtle gradient background
-                GradientPaint gp = new GradientPaint(
-                    0, 0, new Color(15, 23, 42),
-                    getWidth(), getHeight(), new Color(30, 41, 59)
-                );
-                g2.setPaint(gp);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.dispose();
-            }
-        };
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(new EmptyBorder(48, 40, 48, 40));
+        // Quick Demo Accounts Bar
+        JPanel demoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 4));
+        demoPanel.setOpaque(false);
+        demoPanel.setMaximumSize(new Dimension(380, 45));
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
-
-        JLabel logo = new JLabel("🎓");
-        logo.setFont(new Font("SansSerif", Font.PLAIN, 46));
-
-        JLabel brandName = new JLabel("EduManage");
-        brandName.setFont(new Font("SansSerif", Font.BOLD, 32));
-        brandName.setForeground(Color.WHITE);
-
-        JLabel brandSub = new JLabel("Student Data Management System");
-        brandSub.setFont(new Font("SansSerif", Font.BOLD, 15));
-        brandSub.setForeground(new Color(199, 210, 254));
-
-        JLabel project = new JLabel("<html><br>"
-                + "<font size='5' color='#818cf8'>Centralized College ERP</font><br>"
-                + "<font size='3' color='#cbd5e1'>Secure Multi-Role Administrative & Academic Platform</font></html>");
-        project.setFont(UITheme.FONT_BODY);
-        project.setForeground(Color.WHITE);
-
-        JPanel features = new JPanel(new GridLayout(4, 1, 0, 8));
-        features.setOpaque(false);
-        features.setBorder(new EmptyBorder(24, 0, 0, 0));
-
-        features.add(createFeatureItem("🔐 Multi-Role Access Control (Admin, Faculty, Student, Parent)"));
-        features.add(createFeatureItem("📱 Smart QR Attendance & Digital Student ID"));
-        features.add(createFeatureItem("📊 Automated Marks, Grade & CGPA Engine"));
-        features.add(createFeatureItem("🤖 AI Chatbot, Placement & Academic Analytics"));
-
-        content.add(logo);
-        content.add(Box.createVerticalStrut(12));
-        content.add(brandName);
-        content.add(brandSub);
-        content.add(Box.createVerticalStrut(16));
-        content.add(project);
-        content.add(features);
-
-        JLabel footer = new JLabel("EduManage ERP Platform • System v1.0");
-        footer.setFont(UITheme.FONT_SMALL);
-        footer.setForeground(new Color(100, 116, 139));
-
-        panel.add(content, BorderLayout.CENTER);
-        panel.add(footer, BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private JLabel createFeatureItem(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(UITheme.FONT_BODY);
-        l.setForeground(new Color(226, 232, 240));
-        return l;
-    }
-
-    private JPanel createFormPanel() {
-        JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(UITheme.BG_LIGHT);
-        container.setBorder(new EmptyBorder(36, 44, 36, 44));
-
-        JPanel form = new JPanel();
-        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.setOpaque(false);
-
-        JLabel title = new JLabel("Welcome Back");
-        title.setFont(UITheme.FONT_TITLE);
-        title.setForeground(UITheme.TEXT_PRIMARY);
-
-        JLabel subtitle = new JLabel("Sign in with your credentials or click a demo account");
-        subtitle.setFont(UITheme.FONT_BODY);
-        subtitle.setForeground(UITheme.TEXT_SECONDARY);
-
-        // Quick-Fill Demo Pills (Viva/Presentation Helper)
-        JPanel demoBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
-        demoBar.setOpaque(false);
-        demoBar.setBorder(new EmptyBorder(12, 0, 12, 0));
-
-        JLabel demoLbl = new JLabel("Quick Demo:");
+        JLabel demoLbl = new JLabel("Demo:");
         demoLbl.setFont(UITheme.FONT_SMALL);
         demoLbl.setForeground(UITheme.TEXT_MUTED);
-        demoBar.add(demoLbl);
+        demoPanel.add(demoLbl);
 
-        demoBar.add(createDemoButton("Admin", "admin", "admin123"));
-        demoBar.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
-        demoBar.add(createDemoButton("Student", "student_cs", "student123"));
-        demoBar.add(createDemoButton("Parent", "parent_cs", "parent123"));
+        demoPanel.add(createDemoButton("Admin", "admin", "admin123"));
+        demoPanel.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
+        demoPanel.add(createDemoButton("Student", "student_cs", "student123"));
+        demoPanel.add(createDemoButton("Parent", "parent_cs", "parent123"));
+        demoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Inputs
-        txtUsername = new ModernTextField("Enter institutional username");
-        txtPassword = new ModernPasswordField("Enter account password");
+        // Form Fields
+        txtUsername = new ModernTextField("Enter username");
+        txtUsername.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        // Status / Error Alert Label
+        txtPassword = new ModernPasswordField("Enter password");
+        txtPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
         lblStatus = new JLabel(" ");
         lblStatus.setFont(UITheme.FONT_SMALL);
         lblStatus.setForeground(UITheme.DANGER);
+        lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Buttons
-        ModernButton btnLogin = new ModernButton("Sign In to Portal", ModernButton.Variant.PRIMARY);
+        ModernButton btnLogin = new ModernButton("Sign In", ModernButton.Variant.PRIMARY);
+        btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogin.addActionListener(e -> handleLogin());
 
-        ModernButton btnRegister = new ModernButton("Register New Account", ModernButton.Variant.OUTLINE);
+        ModernButton btnRegister = new ModernButton("Create New Account", ModernButton.Variant.OUTLINE);
+        btnRegister.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btnRegister.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnRegister.addActionListener(e -> openRegisterDialog());
 
-        form.add(title);
-        form.add(Box.createVerticalStrut(4));
-        form.add(subtitle);
-        form.add(Box.createVerticalStrut(10));
-        form.add(demoBar);
-        form.add(Box.createVerticalStrut(10));
-
-        form.add(createFieldLabel("Username"));
-        form.add(Box.createVerticalStrut(4));
-        form.add(txtUsername);
-        form.add(Box.createVerticalStrut(12));
-
-        form.add(createFieldLabel("Password"));
-        form.add(Box.createVerticalStrut(4));
-        form.add(txtPassword);
-        form.add(Box.createVerticalStrut(6));
-        form.add(lblStatus);
-        form.add(Box.createVerticalStrut(14));
-
-        form.add(btnLogin);
-        form.add(Box.createVerticalStrut(10));
-        form.add(btnRegister);
-
-        // Enter key listener for instant login
+        // Press Enter to submit
         txtUsername.addActionListener(e -> handleLogin());
         txtPassword.addActionListener(e -> handleLogin());
 
-        container.add(form, BorderLayout.CENTER);
-        return container;
+        // Assemble Components into Frame
+        mainPanel.add(lblHeader);
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(lblSubHeader);
+        mainPanel.add(Box.createVerticalStrut(14));
+        mainPanel.add(demoPanel);
+        mainPanel.add(Box.createVerticalStrut(16));
+
+        mainPanel.add(createFieldLabel("Username"));
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(txtUsername);
+        mainPanel.add(Box.createVerticalStrut(12));
+
+        mainPanel.add(createFieldLabel("Password"));
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(txtPassword);
+        mainPanel.add(Box.createVerticalStrut(6));
+        mainPanel.add(lblStatus);
+        mainPanel.add(Box.createVerticalStrut(12));
+
+        mainPanel.add(btnLogin);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(btnRegister);
+
+        add(mainPanel);
     }
 
     private JLabel createFieldLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(UITheme.FONT_BODY_BOLD);
         l.setForeground(UITheme.TEXT_PRIMARY);
+        l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
 
     private JButton createDemoButton(String label, String username, String password) {
         JButton btn = new JButton(label);
         btn.setFont(UITheme.FONT_BADGE);
-        btn.setForeground(UITheme.ACCENT_CYAN);
-        btn.setBackground(new Color(24, 32, 48));
+        btn.setForeground(UITheme.PRIMARY);
+        btn.setBackground(new Color(241, 245, 249));
         btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(49, 134, 255, 100), 1),
-            new EmptyBorder(5, 12, 5, 12)
+            BorderFactory.createLineBorder(new Color(203, 213, 225), 1),
+            new EmptyBorder(3, 8, 3, 8)
         ));
         btn.addActionListener(e -> {
             txtUsername.setText(username);
