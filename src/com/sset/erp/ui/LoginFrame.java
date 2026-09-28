@@ -12,8 +12,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Modern Login Window for the Student Data Management ERP System.
- * Features institutional branding, demo quick-fill buttons, and responsive inputs.
+ * Simplified Single-Frame Login Window for EduManage ERP.
+ * Follows standard Swing JFrame inheritance with a compact, centered single-window layout.
  */
 public class LoginFrame extends JFrame {
     private final AuthService authService;
@@ -28,12 +28,12 @@ public class LoginFrame extends JFrame {
     }
 
     private void initUI() {
-        setTitle("EduManage - Student Data Management System");
-        setSize(960, 620);
-        setMinimumSize(new Dimension(880, 560));
+        // Frame Configuration
+        setTitle("EduManage - Login");
+        setSize(440, 560);
+        setMinimumSize(new Dimension(400, 520));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(1, 2));
 
         // Left Panel: Institution Brand Banner
         JPanel brandPanel = createBrandPanel();
@@ -144,24 +144,30 @@ public class LoginFrame extends JFrame {
         JLabel demoLbl = new JLabel("Quick Demo:");
         demoLbl.setFont(UITheme.FONT_SMALL);
         demoLbl.setForeground(UITheme.TEXT_MUTED);
-        demoBar.add(demoLbl);
+        demoPanel.add(demoLbl);
 
-        demoBar.add(createDemoButton("Admin", "admin", "admin123"));
-        demoBar.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
-        demoBar.add(createDemoButton("Student", "student_cs", "student123"));
-        demoBar.add(createDemoButton("Parent", "parent_cs", "parent123"));
+        demoPanel.add(createDemoButton("Admin", "admin", "admin123"));
+        demoPanel.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
+        demoPanel.add(createDemoButton("Student", "student_cs", "student123"));
+        demoPanel.add(createDemoButton("Parent", "parent_cs", "parent123"));
+        demoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Inputs
-        txtUsername = new ModernTextField("Enter institutional username");
-        txtPassword = new ModernPasswordField("Enter account password");
+        // Form Fields
+        txtUsername = new ModernTextField("Enter username");
+        txtUsername.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        // Status / Error Alert Label
+        txtPassword = new ModernPasswordField("Enter password");
+        txtPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
         lblStatus = new JLabel(" ");
         lblStatus.setFont(UITheme.FONT_SMALL);
         lblStatus.setForeground(UITheme.DANGER);
+        lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Buttons
-        ModernButton btnLogin = new ModernButton("Sign In to Portal", ModernButton.Variant.PRIMARY);
+        ModernButton btnLogin = new ModernButton("Sign In", ModernButton.Variant.PRIMARY);
+        btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogin.addActionListener(e -> handleLogin());
 
         form.add(title);
@@ -189,14 +195,38 @@ public class LoginFrame extends JFrame {
         txtUsername.addActionListener(e -> handleLogin());
         txtPassword.addActionListener(e -> handleLogin());
 
-        container.add(form, BorderLayout.CENTER);
-        return container;
+        // Assemble Components into Frame
+        mainPanel.add(lblHeader);
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(lblSubHeader);
+        mainPanel.add(Box.createVerticalStrut(14));
+        mainPanel.add(demoPanel);
+        mainPanel.add(Box.createVerticalStrut(16));
+
+        mainPanel.add(createFieldLabel("Username"));
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(txtUsername);
+        mainPanel.add(Box.createVerticalStrut(12));
+
+        mainPanel.add(createFieldLabel("Password"));
+        mainPanel.add(Box.createVerticalStrut(4));
+        mainPanel.add(txtPassword);
+        mainPanel.add(Box.createVerticalStrut(6));
+        mainPanel.add(lblStatus);
+        mainPanel.add(Box.createVerticalStrut(12));
+
+        mainPanel.add(btnLogin);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(btnRegister);
+
+        add(mainPanel);
     }
 
     private JLabel createFieldLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(UITheme.FONT_BODY_BOLD);
         l.setForeground(UITheme.TEXT_PRIMARY);
+        l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
 
@@ -206,7 +236,6 @@ public class LoginFrame extends JFrame {
         btn.setForeground(UITheme.PRIMARY);
         btn.setBackground(new Color(241, 245, 249)); // Slate 100
         btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UITheme.BORDER, 1),

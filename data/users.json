@@ -58,6 +58,21 @@
     "batch": "2024-2028 (CS4)"
   },
   {
+    "id": "USR-STU-91FC004B",
+    "username": "test_user_74526",
+    "passwordHash": "uC/zxdTXWSymokYgzgtOrfkbuLyCAeMrXYfxVsd8qJM=",
+    "salt": "+0xbWX5mKLP1ta2Y5O7fuA==",
+    "fullName": "Ragendu M",
+    "email": "test_user_74526@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-28T11:21:14.528+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-ADM-001",
     "username": "admin",
     "passwordHash": "VSx3t/m0bWKk35rIFb2NhCj2jOLe/8AFETGJd91rPns=",
@@ -94,6 +109,21 @@
     "role": "STUDENT",
     "active": true,
     "createdAt": "2026-09-27T20:39:45.425+0530",
+    "rollNumber": "SSET24CS015",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
+    "id": "USR-STU-1C9091AD",
+    "username": "test_user_18489",
+    "passwordHash": "NXMz7ZwTiPbHCsAFkSjcr1Dr/HKwI2r0UwAxvQzb+7k=",
+    "salt": "3bfwMQS+slrJTY8Pa+9C2Q==",
+    "fullName": "Ragendu M",
+    "email": "test_user_18489@edumanage.edu",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-28T11:21:58.491+0530",
     "rollNumber": "SSET24CS015",
     "department": "Computer Science & Engineering",
     "semester": 3,
