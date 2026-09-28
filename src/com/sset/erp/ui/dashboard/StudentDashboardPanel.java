@@ -16,13 +16,18 @@ import javax.swing.border.EmptyBorder;
  */
 public class StudentDashboardPanel extends JPanel {
     private final StudentUser studentUser;
+    private final com.sset.erp.service.AuthService authService;
+    private final JFrame parentFrame;
 
-    public StudentDashboardPanel(StudentUser studentUser) {
+    public StudentDashboardPanel(com.sset.erp.service.AuthService authService, StudentUser studentUser, JFrame parentFrame) {
+        this.authService = authService;
         this.studentUser = studentUser;
+        this.parentFrame = parentFrame;
         initUI();
     }
 
     private void initUI() {
+        removeAll();
         setLayout(new BorderLayout(20, 20));
         setOpaque(false);
         setBorder(new EmptyBorder(20, 24, 24, 24));
@@ -45,8 +50,18 @@ public class StudentDashboardPanel extends JPanel {
         leftPanel.add(lblName);
         leftPanel.add(lblSub);
 
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightPanel.setOpaque(false);
+        
+        ModernButton btnEditProfile = new ModernButton("Edit Profile", ModernButton.Variant.OUTLINE);
+        btnEditProfile.addActionListener(e -> {
+            com.sset.erp.ui.EditProfileDialog dialog = new com.sset.erp.ui.EditProfileDialog(parentFrame, studentUser, authService, () -> {
+                initUI();
+            });
+            dialog.setVisible(true);
+        });
+
+        rightPanel.add(btnEditProfile);
         rightPanel.add(BadgeLabel.forRole(Role.STUDENT));
         rightPanel.add(BadgeLabel.forStatus(studentUser.isActive()));
 
@@ -111,13 +126,16 @@ public class StudentDashboardPanel extends JPanel {
 
         add(bannerCard, BorderLayout.NORTH);
         add(grid, BorderLayout.CENTER);
+        
+        revalidate();
+        repaint();
     }
 
     private JPanel createDigitalIdPreview() {
         JPanel card = new JPanel(new BorderLayout(12, 12));
-        card.setBackground(new Color(17, 23, 35));
+        card.setBackground(UITheme.BG_DARK);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(49, 134, 255, 120), 1),
+            BorderFactory.createLineBorder(UITheme.PRIMARY_LIGHT, 1),
             new EmptyBorder(16, 16, 16, 16)
         ));
 
@@ -136,8 +154,8 @@ public class StudentDashboardPanel extends JPanel {
         // Avatar Placeholder
         JPanel avatar = new JPanel();
         avatar.setPreferredSize(new Dimension(80, 90));
-        avatar.setBackground(new Color(24, 32, 48));
-        avatar.setBorder(BorderFactory.createLineBorder(new Color(49, 134, 255, 100), 1));
+        avatar.setBackground(UITheme.CARD_BG);
+        avatar.setBorder(BorderFactory.createLineBorder(UITheme.PRIMARY_LIGHT, 1));
         JLabel avText = new JLabel("PHOTO");
         avText.setFont(UITheme.FONT_SMALL);
         avText.setForeground(UITheme.ACCENT_CYAN);
@@ -170,7 +188,7 @@ public class StudentDashboardPanel extends JPanel {
         // Simulated QR Code Box
         JPanel qrBox = new JPanel(new BorderLayout());
         qrBox.setPreferredSize(new Dimension(80, 80));
-        qrBox.setBackground(new Color(24, 32, 48));
+        qrBox.setBackground(UITheme.CARD_BG);
         qrBox.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1));
         JLabel qrLabel = new JLabel("<html><center><font color='#00e5ff'>[QR CODE]</font><br><font size='1' color='#94a3b8'>" + studentUser.getRollNumber() + "</font></center></html>", SwingConstants.CENTER);
         qrLabel.setFont(UITheme.FONT_SMALL);
@@ -188,7 +206,7 @@ public class StudentDashboardPanel extends JPanel {
 
     private JPanel createActionPill(String title, String desc) {
         JPanel p = new JPanel(new GridLayout(2, 1, 0, 2));
-        p.setBackground(new Color(17, 23, 35));
+        p.setBackground(UITheme.CARD_BG_HOVER);
         p.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UITheme.BORDER, 1),
             new EmptyBorder(8, 10, 8, 10)

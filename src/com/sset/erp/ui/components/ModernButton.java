@@ -87,7 +87,7 @@ public class ModernButton extends JButton {
                 textColor = Color.WHITE;
                 break;
             case SECONDARY:
-                bgColor = isPressed ? new Color(24, 32, 48) : (isHovered ? new Color(34, 44, 66) : new Color(28, 36, 54));
+                bgColor = isPressed ? new Color(226, 232, 240) : (isHovered ? new Color(241, 245, 249) : Color.WHITE);
                 textColor = UITheme.TEXT_PRIMARY;
                 borderColor = UITheme.BORDER;
                 break;
@@ -96,13 +96,13 @@ public class ModernButton extends JButton {
                 textColor = Color.WHITE;
                 break;
             case OUTLINE:
-                bgColor = isHovered ? new Color(49, 134, 255, 35) : new Color(255, 255, 255, 8);
-                textColor = isHovered ? UITheme.ACCENT_CYAN : UITheme.TEXT_PRIMARY;
+                bgColor = isHovered ? new Color(26, 115, 232, 20) : new Color(0, 0, 0, 0);
+                textColor = isHovered ? UITheme.PRIMARY : UITheme.TEXT_PRIMARY;
                 borderColor = isHovered ? UITheme.PRIMARY : UITheme.BORDER;
                 break;
             case GHOST:
-                bgColor = isHovered ? new Color(255, 255, 255, 15) : new Color(0, 0, 0, 0);
-                textColor = isHovered ? Color.WHITE : UITheme.TEXT_SECONDARY;
+                bgColor = isHovered ? new Color(0, 0, 0, 15) : new Color(0, 0, 0, 0);
+                textColor = isHovered ? UITheme.TEXT_PRIMARY : UITheme.TEXT_SECONDARY;
                 break;
             default:
                 bgColor = UITheme.PRIMARY;

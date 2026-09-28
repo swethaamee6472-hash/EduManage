@@ -160,6 +160,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public boolean updateUser(User user) {
+        if (user == null || user.getUsername() == null) {
+            return false;
+        }
+        userRepository.save(user);
+        return true;
+    }
+
+    @Override
     public long getUserCount() {
         return userRepository.count();
     }

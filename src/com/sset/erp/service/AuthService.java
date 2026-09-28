@@ -19,6 +19,7 @@ public interface AuthService {
     List<User> getAllUsers();
     List<User> getUsersByRole(Role role);
     Optional<User> getUserById(String userId);
+    boolean updateUser(User user);
     long getUserCount();
     long getUserCountByRole(Role role);
     void logout();
