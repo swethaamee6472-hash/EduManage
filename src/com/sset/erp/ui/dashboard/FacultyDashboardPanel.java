@@ -5,11 +5,18 @@ import com.sset.erp.model.Role;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
+import com.sset.erp.util.QRCodeUtil;
 import com.sset.erp.util.UITheme;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * Faculty Dashboard Panel presenting academic profile, course allocations, and faculty tools.
@@ -95,9 +102,9 @@ public class FacultyDashboardPanel extends JPanel {
         JPanel modulesList = new JPanel(new GridLayout(3, 1, 0, 12));
         modulesList.setOpaque(false);
 
-        modulesList.add(createModuleCard("Smart QR Attendance", "Launch dynamic attendance QR session", "Module 4", "📱"));
-        modulesList.add(createModuleCard("Marks & Internal Assessment", "Enter internal test scores and GPA", "Module 5", "📝"));
-        modulesList.add(createModuleCard("Timetable & Subject Allocation", "View assigned weekly lecture periods", "Module 13", "📅"));
+        modulesList.add(createModuleCard("Scan QR Attendance", "Scan a student's QR Code pass", "Module 4", "📷", this::scanStudentQR));
+        modulesList.add(createModuleCard("Marks & Internal Assessment", "Enter internal test scores and GPA", "Module 5", "📝", () -> showModuleStatus("Marks & Internal Assessment")));
+        modulesList.add(createModuleCard("Timetable & Subject Allocation", "View assigned weekly lecture periods", "Module 13", "📅", () -> showModuleStatus("Timetable & Subject Allocation")));
 
         workflowCard.add(workflowTitle, BorderLayout.NORTH);
         workflowCard.add(modulesList, BorderLayout.CENTER);
@@ -109,7 +116,58 @@ public class FacultyDashboardPanel extends JPanel {
         add(contentGrid, BorderLayout.CENTER);
     }
 
-    private JPanel createModuleCard(String title, String desc, String badge, String icon) {
+    private void showModuleStatus(String title) {
+        JOptionPane.showMessageDialog(this,
+            "Module '" + title + "' is scheduled in Phase 2 of the implementation plan.",
+            "Module Status", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void scanStudentQR() {
+        // Run python script in background thread
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                ProcessBuilder pb = new ProcessBuilder("python3", "qr_scanner.py");
+                Process process = pb.start();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        line = line.trim();
+                        if (line.equals("READY") || line.isEmpty()) continue;
+                        // First actual line should be the QR data
+                        process.destroy();
+                        return line;
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String decodedText = get();
+                    if (decodedText != null) {
+                        if (decodedText.startsWith("STUDENT_ID:")) {
+                            String rollNumber = decodedText.substring("STUDENT_ID:".length());
+                            JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
+                                "Successfully marked attendance for Student Roll No: " + rollNumber, 
+                                "Attendance Success", JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
+                                "Invalid QR Code! This is not a valid EduManage Student QR.", 
+                                "Verification Failed", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
+                        "Failed to launch camera scanner. Make sure python3 and opencv-python are installed.\nError: " + ex.getMessage(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private JPanel createModuleCard(String title, String desc, String badge, String icon, Runnable action) {
         JPanel p = new JPanel(new BorderLayout(12, 0));
         p.setBackground(UITheme.CARD_BG_HOVER);
         p.setBorder(BorderFactory.createCompoundBorder(
@@ -135,9 +193,9 @@ public class FacultyDashboardPanel extends JPanel {
         textP.add(lblD);
 
         ModernButton btn = new ModernButton("Open", ModernButton.Variant.OUTLINE);
-        btn.addActionListener(e -> JOptionPane.showMessageDialog(this,
-            "Module '" + title + "' is scheduled in Phase 2 of the implementation plan.",
-            "Module Status", JOptionPane.INFORMATION_MESSAGE));
+        btn.addActionListener(e -> {
+            if (action != null) action.run();
+        });
 
         p.add(lblIcon, BorderLayout.WEST);
         p.add(textP, BorderLayout.CENTER);
