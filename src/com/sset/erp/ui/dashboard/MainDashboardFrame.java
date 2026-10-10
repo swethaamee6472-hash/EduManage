@@ -92,7 +92,7 @@ public class MainDashboardFrame extends JFrame {
         } else if (currentUser instanceof FacultyUser) {
             roleDashboardPanel = new FacultyDashboardPanel((FacultyUser) currentUser);
         } else if (currentUser instanceof StudentUser) {
-            roleDashboardPanel = new StudentDashboardPanel((StudentUser) currentUser);
+            roleDashboardPanel = new StudentDashboardPanel(authService, (StudentUser) currentUser, this);
         } else if (currentUser instanceof ParentUser) {
             roleDashboardPanel = new ParentDashboardPanel((ParentUser) currentUser);
         } else {

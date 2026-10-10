@@ -56,21 +56,21 @@ public class FileUserRepository implements UserRepository {
         // 1. Admin: Dr. Litty Koshy
         AdminUser admin = new AdminUser(
             "USR-ADM-001", "admin", "admin123",
-            "Dr. Litty Koshy", "littykoshy@edumanage.edu",
+            "Dr. Litty Koshy", "littykoshy@gmail.com",
             "System Administrator"
         );
 
         // 2. Faculty: Prof. Rajesh Kumar
         FacultyUser faculty = new FacultyUser(
             "USR-FAC-001", "faculty_cs", "faculty123",
-            "Prof. Rajesh Kumar", "rajeshk@edumanage.edu",
+            "Prof. Rajesh Kumar", "rajeshk@gmail.com",
             "EMP-CS-104", "Computer Science & Engineering", "Associate Professor"
         );
 
         // 3. Student: Swetha Sathyan
         StudentUser student = new StudentUser(
             "USR-STU-001", "student_cs", "student123",
-            "Swetha Sathyan", "swethasathyan@edumanage.edu",
+            "Swetha Sathyan", "swethasathyan@gmail.com",
             "SSET24CS042", "Computer Science & Engineering", 3, "2024-2028 (CS4)"
         );
 

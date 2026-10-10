@@ -127,7 +127,7 @@ public class AdminDashboardPanel extends JPanel {
 
         JTableHeader header = userTable.getTableHeader();
         header.setFont(UITheme.FONT_BODY_BOLD);
-        header.setBackground(new Color(17, 23, 35));
+        header.setBackground(UITheme.BG_DARK);
         header.setForeground(UITheme.TEXT_SECONDARY);
         header.setPreferredSize(new Dimension(header.getWidth(), 40));
 
@@ -265,17 +265,17 @@ public class AdminDashboardPanel extends JPanel {
         }
     }
 
-    // Antigravity Dark Text Cell Renderer
+        // Antigravity Dark Text Cell Renderer -> Light Text Cell Renderer
     private static class DarkTextRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             if (!isSelected) {
-                setBackground(row % 2 == 0 ? UITheme.CARD_BG : new Color(17, 23, 35));
-                setForeground(col == 1 ? UITheme.ACCENT_CYAN : UITheme.TEXT_PRIMARY);
+                setBackground(row % 2 == 0 ? UITheme.CARD_BG : UITheme.BG_DARK);
+                setForeground(col == 1 ? UITheme.PRIMARY : UITheme.TEXT_PRIMARY);
             } else {
                 setBackground(UITheme.PRIMARY_LIGHT);
-                setForeground(Color.WHITE);
+                setForeground(UITheme.PRIMARY);
             }
             setBorder(new EmptyBorder(0, 12, 0, 12));
             return this;

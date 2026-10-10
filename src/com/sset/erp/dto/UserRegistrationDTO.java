@@ -47,8 +47,8 @@ public class UserRegistrationDTO {
         if (fullName == null || fullName.trim().isEmpty()) {
             errors.add("Full name cannot be blank.");
         }
-        if (email == null || !email.contains("@") || !email.contains(".")) {
-            errors.add("A valid email address is required.");
+        if (email == null || !email.trim().toLowerCase().matches("^[a-zA-Z0-9._%+-]+@gmail\\.com$")) {
+            errors.add("Only valid Gmail addresses (ending in @gmail.com) are accepted.");
         }
         if (role == null) {
             errors.add("User role must be selected.");

@@ -117,7 +117,7 @@ public class TestRunner {
         validStudent.setUsername(testUser);
         validStudent.setPassword("ragendu123");
         validStudent.setFullName("Ragendu M");
-        validStudent.setEmail(testUser + "@edumanage.edu");
+        validStudent.setEmail(testUser + "@gmail.com");
         validStudent.setRole(Role.STUDENT);
         validStudent.setRollNumber("SSET24CS015");
         validStudent.setDepartment("Computer Science & Engineering");
@@ -136,12 +136,16 @@ public class TestRunner {
         invalidDto.setUsername("ab"); // too short (< 3)
         invalidDto.setPassword("123"); // too short (< 6)
         invalidDto.setFullName(""); // blank
-        invalidDto.setEmail("invalid-email"); // missing @ or .
+        invalidDto.setEmail("invalid-email"); // not gmail
         List<String> errors = invalidDto.validate();
         assertTrue("Validation catches short username", errors.stream().anyMatch(e -> e.contains("Username")));
         assertTrue("Validation catches short password", errors.stream().anyMatch(e -> e.contains("Password")));
         assertTrue("Validation catches blank full name", errors.stream().anyMatch(e -> e.contains("Full name")));
-        assertTrue("Validation catches bad email", errors.stream().anyMatch(e -> e.contains("valid email")));
+        assertTrue("Validation catches bad email", errors.stream().anyMatch(e -> e.contains("Gmail")));
+
+        // Test non-gmail domain rejection
+        invalidDto.setEmail("user@yahoo.com");
+        assertTrue("Validation rejects non-gmail addresses", invalidDto.validate().stream().anyMatch(e -> e.contains("Gmail")));
     }
 
     private static void testSessionManagerSingleton() {

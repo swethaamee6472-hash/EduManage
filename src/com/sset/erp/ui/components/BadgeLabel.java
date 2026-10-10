@@ -62,7 +62,7 @@ public class BadgeLabel extends JLabel {
         g2.fillRoundRect(0, 0, width, height, radius, radius);
 
         // Subtle glowing border
-        g2.setColor(new Color(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), 120));
+        g2.setColor(new Color(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), 50));
         g2.setStroke(new BasicStroke(1.2f));
         g2.drawRoundRect(0, 0, width - 1, height - 1, radius, radius);
 

@@ -10,37 +10,37 @@ import javax.swing.border.Border;
 public final class UITheme {
     private UITheme() {}
 
-    // Google Antigravity Dark Palette
-    public static final Color BG_DARK = new Color(11, 15, 23);         // #0b0f17 Deep Space Obsidian
-    public static final Color BG_LIGHT = new Color(15, 20, 31);        // #0f141f Dark Canvas
-    public static final Color CARD_BG = new Color(22, 28, 42);         // #161c2a Card Surface
-    public static final Color CARD_BG_HOVER = new Color(28, 36, 54);   // Card Hover
-    public static final Color INPUT_BG = new Color(13, 18, 28);        // Input Background
+    // Professional Enterprise Light Palette
+    public static final Color BG_DARK = new Color(241, 245, 249);      // #f1f5f9 Slate 100 (App Background)
+    public static final Color BG_LIGHT = new Color(248, 250, 252);     // #f8fafc Slate 50 (Slightly lighter panels)
+    public static final Color CARD_BG = new Color(255, 255, 255);      // #ffffff Card Surface
+    public static final Color CARD_BG_HOVER = new Color(248, 250, 252);// Card Hover
+    public static final Color INPUT_BG = new Color(255, 255, 255);     // Input Background
 
-    public static final Color BORDER = new Color(38, 48, 68);          // Slate Outline
-    public static final Color BORDER_FOCUS = new Color(49, 134, 255);  // Antigravity Google Blue (#3186ff)
+    public static final Color BORDER = new Color(226, 232, 240);       // #e2e8f0 Slate Outline
+    public static final Color BORDER_FOCUS = new Color(26, 115, 232);  // Google Blue (#1a73e8)
 
     // Primary Accents
-    public static final Color PRIMARY = new Color(49, 134, 255);       // #3186ff Antigravity Blue
-    public static final Color PRIMARY_HOVER = new Color(26, 115, 232); // #1a73e8 Deep Blue
-    public static final Color PRIMARY_LIGHT = new Color(20, 38, 70);   // Translucent Blue Highlight
+    public static final Color PRIMARY = new Color(26, 115, 232);       // #1a73e8 Deep Blue
+    public static final Color PRIMARY_HOVER = new Color(21, 93, 168);  // Darker Blue
+    public static final Color PRIMARY_LIGHT = new Color(232, 240, 254); // Light Blue Highlight
 
-    public static final Color ACCENT_CYAN = new Color(0, 229, 255);    // Neon Cyan
+    public static final Color ACCENT_CYAN = new Color(14, 165, 233);   // Sky 500
     public static final Color ACCENT_PURPLE = new Color(168, 85, 247); // Electric Purple
 
-    // Text hierarchy for Dark Theme
-    public static final Color TEXT_PRIMARY = new Color(248, 250, 252);  // High contrast white
-    public static final Color TEXT_SECONDARY = new Color(148, 163, 184);// Slate 400
-    public static final Color TEXT_MUTED = new Color(100, 116, 139);    // Slate 500
+    // Text hierarchy for Light Theme
+    public static final Color TEXT_PRIMARY = new Color(30, 41, 59);    // #1e293b Slate 800 (Near black)
+    public static final Color TEXT_SECONDARY = new Color(71, 85, 105); // #475569 Slate 600
+    public static final Color TEXT_MUTED = new Color(148, 163, 184);   // #94a3b8 Slate 400
 
     // Google Semantic Colors
-    public static final Color SUCCESS = new Color(0, 185, 92);         // Google Green (#00b95c)
-    public static final Color SUCCESS_BG = new Color(16, 48, 32);
-    public static final Color DANGER = new Color(252, 65, 61);         // Google Red (#fc413d)
-    public static final Color DANGER_BG = new Color(48, 20, 22);
-    public static final Color WARNING = new Color(251, 188, 4);        // Google Yellow (#fbbc04)
-    public static final Color WARNING_BG = new Color(48, 40, 16);
-    public static final Color INFO = new Color(49, 134, 255);          // Google Blue
+    public static final Color SUCCESS = new Color(21, 128, 61);        // Green 700
+    public static final Color SUCCESS_BG = new Color(220, 252, 231);   // Green 100
+    public static final Color DANGER = new Color(185, 28, 28);         // Red 700
+    public static final Color DANGER_BG = new Color(254, 226, 226);    // Red 100
+    public static final Color WARNING = new Color(180, 83, 9);         // Amber 700
+    public static final Color WARNING_BG = new Color(254, 243, 199);   // Amber 100
+    public static final Color INFO = new Color(29, 78, 216);           // Blue 700
 
     // Typography
     public static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 22);
