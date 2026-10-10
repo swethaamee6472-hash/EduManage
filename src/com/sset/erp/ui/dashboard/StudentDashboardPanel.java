@@ -5,11 +5,18 @@ import com.sset.erp.model.StudentUser;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
+import com.sset.erp.util.QRCodeUtil;
 import com.sset.erp.util.UITheme;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * Student Dashboard Panel displaying student personal records, Digital ID preview, and academic tools.
@@ -97,10 +104,10 @@ public class StudentDashboardPanel extends JPanel {
         JPanel modulesPreview = new JPanel(new GridLayout(2, 2, 10, 10));
         modulesPreview.setOpaque(false);
 
-        modulesPreview.add(createActionPill("📱 QR Attendance", "Scan faculty lecture QR"));
-        modulesPreview.add(createActionPill("📊 Marks & CGPA", "View internal test scores"));
-        modulesPreview.add(createActionPill("📄 Resume Builder", "Generate ATS resume"));
-        modulesPreview.add(createActionPill("🎯 Placement Check", "Check job eligibility"));
+        modulesPreview.add(createActionPill("📱 Download QR", "Get personal QR for attendance", this::downloadStudentQR));
+        modulesPreview.add(createActionPill("📊 Marks & CGPA", "View internal test scores", null));
+        modulesPreview.add(createActionPill("📄 Resume Builder", "Generate ATS resume", null));
+        modulesPreview.add(createActionPill("🎯 Placement Check", "Check job eligibility", null));
 
         idCard.add(idTitle, BorderLayout.NORTH);
         idCard.add(idBox, BorderLayout.CENTER);
@@ -167,14 +174,22 @@ public class StudentDashboardPanel extends JPanel {
         info.add(l3);
         info.add(l4);
 
-        // Simulated QR Code Box
+        // Actual QR Code Box
         JPanel qrBox = new JPanel(new BorderLayout());
         qrBox.setPreferredSize(new Dimension(80, 80));
-        qrBox.setBackground(new Color(24, 32, 48));
+        qrBox.setBackground(Color.WHITE);
         qrBox.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1));
-        JLabel qrLabel = new JLabel("<html><center><font color='#00e5ff'>[QR CODE]</font><br><font size='1' color='#94a3b8'>" + studentUser.getRollNumber() + "</font></center></html>", SwingConstants.CENTER);
-        qrLabel.setFont(UITheme.FONT_SMALL);
-        qrBox.add(qrLabel, BorderLayout.CENTER);
+        
+        try {
+            String studentPayload = "STUDENT_ID:" + studentUser.getRollNumber();
+            BufferedImage qrImg = QRCodeUtil.generateQRCode(studentPayload, 80, 80);
+            JLabel qrLabel = new JLabel(new ImageIcon(qrImg));
+            qrBox.add(qrLabel, BorderLayout.CENTER);
+        } catch (Exception e) {
+            JLabel qrLabel = new JLabel("QR Error", SwingConstants.CENTER);
+            qrLabel.setForeground(Color.RED);
+            qrBox.add(qrLabel, BorderLayout.CENTER);
+        }
 
         body.add(avatar, BorderLayout.WEST);
         body.add(info, BorderLayout.CENTER);
@@ -186,7 +201,35 @@ public class StudentDashboardPanel extends JPanel {
         return card;
     }
 
-    private JPanel createActionPill(String title, String desc) {
+    private void downloadStudentQR() {
+        try {
+            String studentPayload = "STUDENT_ID:" + studentUser.getRollNumber();
+            BufferedImage qrImage = QRCodeUtil.generateQRCode(studentPayload, 300, 300);
+            
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Student QR Code");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("PNG Images", "png"));
+            fileChooser.setSelectedFile(new File("My_QR_" + studentUser.getRollNumber() + ".png"));
+            
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                if (!fileToSave.getName().toLowerCase().endsWith(".png")) {
+                    fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".png");
+                }
+                ImageIO.write(qrImage, "PNG", fileToSave);
+                JOptionPane.showMessageDialog(this, 
+                    "QR Code saved successfully to: \n" + fileToSave.getAbsolutePath(), 
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Failed to generate/save QR Code: " + ex.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private JPanel createActionPill(String title, String desc, Runnable action) {
         JPanel p = new JPanel(new GridLayout(2, 1, 0, 2));
         p.setBackground(new Color(17, 23, 35));
         p.setBorder(BorderFactory.createCompoundBorder(
@@ -203,6 +246,25 @@ public class StudentDashboardPanel extends JPanel {
 
         p.add(t);
         p.add(d);
+        
+        if (action != null) {
+            p.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            p.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    action.run();
+                }
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    p.setBackground(new Color(28, 36, 54));
+                }
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    p.setBackground(new Color(17, 23, 35));
+                }
+            });
+        }
+        
         return p;
     }
 }
