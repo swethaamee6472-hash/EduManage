@@ -24,8 +24,18 @@ for /R "%SRC_DIR%" %%F in (*.java) do (
     echo "!FILE_PATH!" >> "%BASE_DIR%sources.txt"
 )
 
-:: Compile with Java compiler
-javac -d "%BIN_DIR%" @"%BASE_DIR%sources.txt"
+:: Build classpath from all jars in lib\
+set "LIB_CP="
+for %%J in ("%BASE_DIR%lib\*.jar") do (
+    if defined LIB_CP (
+        set "LIB_CP=!LIB_CP!;%%J"
+    ) else (
+        set "LIB_CP=%%J"
+    )
+)
+
+:: Compile with Java compiler (include lib jars)
+javac -cp "%LIB_CP%" -d "%BIN_DIR%" @"%BASE_DIR%sources.txt"
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Compilation failed.
     del "%BASE_DIR%sources.txt"
@@ -38,7 +48,7 @@ echo [OK] Compilation completed successfully into bin\ directory.
 if "%1"=="--test" (
     echo.
     echo Running automated verification test suite...
-    java -cp "%BIN_DIR%" com.sset.erp.test.TestRunner
+    java -cp "%BIN_DIR%;%LIB_CP%" com.sset.erp.test.TestRunner
 ) else (
     echo Launching EduManage ERP GUI...
     echo.
@@ -48,5 +58,5 @@ if "%1"=="--test" (
     echo   • Student       : student_cs / student123
     echo   • Parent        : parent_cs / parent123
     echo ==========================================================
-    java -cp "%BIN_DIR%" com.sset.erp.Main
+    java -cp "%BIN_DIR%;%LIB_CP%" com.sset.erp.Main
 )

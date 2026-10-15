@@ -139,82 +139,201 @@ public class StudentDashboardPanel extends JPanel {
     }
 
     private JPanel createDigitalIdPreview() {
-        JPanel card = new JPanel(new BorderLayout(12, 12));
-        card.setBackground(UITheme.BG_DARK);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(UITheme.PRIMARY_LIGHT, 1),
-            new EmptyBorder(16, 16, 16, 16)
+        // Outer ID card container with curved border & drop shadow feel
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                UITheme.applyQualityRendering(g2);
+                int w = getWidth();
+                int h = getHeight();
+                // Clean white card background with rounded corners
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                // Subtle card border
+                g2.setColor(new Color(203, 213, 225)); // Slate 300
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(0, 0));
+        card.setBorder(new EmptyBorder(0, 0, 0, 0));
+
+        // 1. Top Institution Header Banner with Gradient
+        JPanel headerBanner = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                UITheme.applyQualityRendering(g2);
+                int w = getWidth();
+                int h = getHeight();
+                GradientPaint gp = new GradientPaint(
+                    0, 0, new Color(30, 64, 175), // Blue 800
+                    w, h, new Color(59, 130, 246)  // Blue 500
+                );
+                g2.setPaint(gp);
+                // Fill top rounded corners
+                g2.fillRoundRect(0, 0, w - 1, h + 16, 16, 16);
+                g2.dispose();
+            }
+        };
+        headerBanner.setOpaque(false);
+        headerBanner.setLayout(new BorderLayout());
+        headerBanner.setBorder(new EmptyBorder(10, 16, 10, 16));
+
+        JLabel collegeName = new JLabel("🎓 EDUMANAGE ACADEMIC IDENTITY");
+        collegeName.setFont(new Font("SansSerif", Font.BOLD, 11));
+        collegeName.setForeground(Color.WHITE);
+
+        JLabel validBadge = new JLabel("VERIFIED STUDENT");
+        validBadge.setFont(new Font("SansSerif", Font.BOLD, 9));
+        validBadge.setForeground(new Color(187, 247, 208)); // Emerald 200
+
+        headerBanner.add(collegeName, BorderLayout.WEST);
+        headerBanner.add(validBadge, BorderLayout.EAST);
+
+        // 2. Middle Content: Avatar + Student Info + QR Code
+        JPanel middleContent = new JPanel(new BorderLayout(14, 0));
+        middleContent.setOpaque(false);
+        middleContent.setBorder(new EmptyBorder(14, 16, 14, 16));
+
+        // Modern Student Avatar Icon / Monogram
+        String initials = "ST";
+        if (studentUser.getFullName() != null && !studentUser.getFullName().trim().isEmpty()) {
+            String[] parts = studentUser.getFullName().trim().split("\\s+");
+            if (parts.length >= 2) {
+                initials = ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            } else if (parts.length == 1 && parts[0].length() >= 1) {
+                initials = ("" + parts[0].charAt(0)).toUpperCase();
+            }
+        }
+        final String avatarText = initials;
+
+        JPanel avatarPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                UITheme.applyQualityRendering(g2);
+                int size = Math.min(getWidth(), getHeight()) - 4;
+                // Soft gradient circle
+                GradientPaint gp = new GradientPaint(
+                    0, 0, new Color(224, 231, 255), // Indigo 100
+                    getWidth(), getHeight(), new Color(199, 210, 254) // Indigo 200
+                );
+                g2.setPaint(gp);
+                g2.fillOval(2, 2, size, size);
+
+                g2.setColor(new Color(165, 180, 252));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawOval(2, 2, size, size);
+
+                g2.setColor(new Color(49, 46, 129)); // Indigo 900
+                g2.setFont(new Font("SansSerif", Font.BOLD, 22));
+                FontMetrics fm = g2.getFontMetrics();
+                int tx = (getWidth() - fm.stringWidth(avatarText)) / 2;
+                int ty = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                g2.drawString(avatarText, tx, ty);
+                g2.dispose();
+            }
+        };
+        avatarPanel.setPreferredSize(new Dimension(74, 74));
+        avatarPanel.setOpaque(false);
+
+        // Info Column
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setOpaque(false);
+
+        JLabel nameLbl = new JLabel(studentUser.getFullName());
+        nameLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
+        nameLbl.setForeground(UITheme.TEXT_PRIMARY);
+
+        JLabel rollLbl = new JLabel("ID: " + studentUser.getRollNumber());
+        rollLbl.setFont(new Font("SansSerif", Font.BOLD, 13));
+        rollLbl.setForeground(UITheme.PRIMARY);
+
+        JLabel deptLbl = new JLabel("Dept: " + studentUser.getDepartment());
+        deptLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        deptLbl.setForeground(UITheme.TEXT_SECONDARY);
+
+        JLabel batchLbl = new JLabel("Batch: " + studentUser.getBatch() + "  |  Sem " + studentUser.getSemester());
+        batchLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        batchLbl.setForeground(UITheme.TEXT_MUTED);
+
+        infoPanel.add(nameLbl);
+        infoPanel.add(Box.createVerticalStrut(3));
+        infoPanel.add(rollLbl);
+        infoPanel.add(Box.createVerticalStrut(4));
+        infoPanel.add(deptLbl);
+        infoPanel.add(Box.createVerticalStrut(2));
+        infoPanel.add(batchLbl);
+
+        // QR Code Card on the right
+        JPanel qrContainer = new JPanel();
+        qrContainer.setLayout(new BoxLayout(qrContainer, BoxLayout.Y_AXIS));
+        qrContainer.setOpaque(false);
+
+        JPanel qrBox = new JPanel(new BorderLayout());
+        qrBox.setPreferredSize(new Dimension(84, 84));
+        qrBox.setBackground(Color.WHITE);
+        qrBox.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+            new EmptyBorder(3, 3, 3, 3)
         ));
 
-        // Header
-        JPanel head = new JPanel(new BorderLayout());
-        head.setOpaque(false);
-        JLabel sset = new JLabel("EDUMANAGE DIGITAL STUDENT IDENTITY");
-        sset.setFont(new Font("SansSerif", Font.BOLD, 12));
-        sset.setForeground(UITheme.ACCENT_CYAN);
-        head.add(sset, BorderLayout.WEST);
-
-        // Body
-        JPanel body = new JPanel(new BorderLayout(16, 0));
-        body.setOpaque(false);
-
-        // Avatar Placeholder
-        JPanel avatar = new JPanel();
-        avatar.setPreferredSize(new Dimension(80, 90));
-        avatar.setBackground(UITheme.CARD_BG);
-        avatar.setBorder(BorderFactory.createLineBorder(UITheme.PRIMARY_LIGHT, 1));
-        JLabel avText = new JLabel("PHOTO");
-        avText.setFont(UITheme.FONT_SMALL);
-        avText.setForeground(UITheme.ACCENT_CYAN);
-        avatar.add(avText);
-
-        JPanel info = new JPanel(new GridLayout(4, 1, 0, 2));
-        info.setOpaque(false);
-
-        JLabel l1 = new JLabel(studentUser.getFullName());
-        l1.setFont(UITheme.FONT_SUBHEADER);
-        l1.setForeground(UITheme.TEXT_PRIMARY);
-
-        JLabel l2 = new JLabel("Roll No: " + studentUser.getRollNumber());
-        l2.setFont(UITheme.FONT_BODY_BOLD);
-        l2.setForeground(UITheme.PRIMARY);
-
-        JLabel l3 = new JLabel("Dept: " + studentUser.getDepartment());
-        l3.setFont(UITheme.FONT_SMALL);
-        l3.setForeground(UITheme.TEXT_SECONDARY);
-
-        JLabel l4 = new JLabel("Batch: " + studentUser.getBatch() + " • Sem " + studentUser.getSemester());
-        l4.setFont(UITheme.FONT_SMALL);
-        l4.setForeground(UITheme.TEXT_SECONDARY);
-
-        info.add(l1);
-        info.add(l2);
-        info.add(l3);
-        info.add(l4);
-
-        // Actual QR Code Box
-        JPanel qrBox = new JPanel(new BorderLayout());
-        qrBox.setPreferredSize(new Dimension(80, 80));
-        qrBox.setBackground(UITheme.CARD_BG);
-        qrBox.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1));
-        
         try {
             String studentPayload = "STUDENT_ID:" + studentUser.getRollNumber();
-            BufferedImage qrImg = QRCodeUtil.generateQRCode(studentPayload, 80, 80);
+            BufferedImage qrImg = QRCodeUtil.generateQRCode(studentPayload, 76, 76);
             JLabel qrLabel = new JLabel(new ImageIcon(qrImg));
             qrBox.add(qrLabel, BorderLayout.CENTER);
         } catch (Exception e) {
             JLabel qrLabel = new JLabel("QR Error", SwingConstants.CENTER);
+            qrLabel.setFont(UITheme.FONT_SMALL);
             qrLabel.setForeground(Color.RED);
             qrBox.add(qrLabel, BorderLayout.CENTER);
         }
 
-        body.add(avatar, BorderLayout.WEST);
-        body.add(info, BorderLayout.CENTER);
-        body.add(qrBox, BorderLayout.EAST);
+        JLabel scanHint = new JLabel("Scan for Attendance", SwingConstants.CENTER);
+        scanHint.setFont(new Font("SansSerif", Font.PLAIN, 9));
+        scanHint.setForeground(UITheme.TEXT_MUTED);
+        scanHint.setAlignmentX(Component.CENTER_ALIGNMENT);
+        qrBox.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        card.add(head, BorderLayout.NORTH);
-        card.add(body, BorderLayout.CENTER);
+        qrContainer.add(qrBox);
+        qrContainer.add(Box.createVerticalStrut(3));
+        qrContainer.add(scanHint);
+
+        middleContent.add(avatarPanel, BorderLayout.WEST);
+        middleContent.add(infoPanel, BorderLayout.CENTER);
+        middleContent.add(qrContainer, BorderLayout.EAST);
+
+        // 3. Footer Bar with security chip & validity note
+        JPanel footerBar = new JPanel(new BorderLayout());
+        footerBar.setBackground(new Color(248, 250, 252)); // Slate 50
+        footerBar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)),
+            new EmptyBorder(6, 16, 8, 16)
+        ));
+
+        JLabel footerNote = new JLabel("Official Student Pass • SSET Autonomous ERP");
+        footerNote.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        footerNote.setForeground(UITheme.TEXT_MUTED);
+
+        JLabel statusPill = new JLabel("● ACTIVE");
+        statusPill.setFont(new Font("SansSerif", Font.BOLD, 9));
+        statusPill.setForeground(new Color(22, 163, 74)); // Green 600
+
+        footerBar.add(footerNote, BorderLayout.WEST);
+        footerBar.add(statusPill, BorderLayout.EAST);
+
+        card.add(headerBanner, BorderLayout.NORTH);
+        card.add(middleContent, BorderLayout.CENTER);
+        card.add(footerBar, BorderLayout.SOUTH);
 
         return card;
     }

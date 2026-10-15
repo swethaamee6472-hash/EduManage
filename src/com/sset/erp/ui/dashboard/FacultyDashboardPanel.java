@@ -2,6 +2,7 @@ package com.sset.erp.ui.dashboard;
 
 import com.sset.erp.model.FacultyUser;
 import com.sset.erp.model.Role;
+import com.sset.erp.ui.LiveWebcamQRScanner;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
@@ -9,9 +10,7 @@ import com.sset.erp.util.QRCodeUtil;
 import com.sset.erp.util.UITheme;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -123,48 +122,22 @@ public class FacultyDashboardPanel extends JPanel {
     }
 
     private void scanStudentQR() {
-        // Run python script in background thread
-        new SwingWorker<String, Void>() {
-            @Override
-            protected String doInBackground() throws Exception {
-                ProcessBuilder pb = new ProcessBuilder("python3", "qr_scanner.py");
-                Process process = pb.start();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        line = line.trim();
-                        if (line.equals("READY") || line.isEmpty()) continue;
-                        // First actual line should be the QR data
-                        process.destroy();
-                        return line;
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    String decodedText = get();
-                    if (decodedText != null) {
-                        if (decodedText.startsWith("STUDENT_ID:")) {
-                            String rollNumber = decodedText.substring("STUDENT_ID:".length());
-                            JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
-                                "Successfully marked attendance for Student Roll No: " + rollNumber, 
-                                "Attendance Success", JOptionPane.INFORMATION_MESSAGE);
-                        } else {
-                            JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
-                                "Invalid QR Code! This is not a valid EduManage Student QR.", 
-                                "Verification Failed", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(FacultyDashboardPanel.this, 
-                        "Failed to launch camera scanner. Make sure python3 and opencv-python are installed.\nError: " + ex.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
+        // Open the pure-Java live webcam QR scanner (ZXing + webcam-capture)
+        LiveWebcamQRScanner scanner = new LiveWebcamQRScanner(decodedText -> {
+            if (decodedText != null && !decodedText.isBlank()) {
+                if (decodedText.startsWith("STUDENT_ID:")) {
+                    String rollNumber = decodedText.substring("STUDENT_ID:".length());
+                    JOptionPane.showMessageDialog(FacultyDashboardPanel.this,
+                        "Successfully marked attendance for Student Roll No: " + rollNumber,
+                        "Attendance Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(FacultyDashboardPanel.this,
+                        "Invalid QR Code! This is not a valid EduManage Student QR.",
+                        "Verification Failed", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        }.execute();
+        });
+        scanner.setVisible(true);
     }
 
     private JPanel createModuleCard(String title, String desc, String badge, String icon, Runnable action) {

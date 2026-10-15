@@ -144,13 +144,12 @@ public class LoginFrame extends JFrame {
         JLabel demoLbl = new JLabel("Quick Demo:");
         demoLbl.setFont(UITheme.FONT_SMALL);
         demoLbl.setForeground(UITheme.TEXT_MUTED);
-        demoPanel.add(demoLbl);
+        demoBar.add(demoLbl);
 
-        demoPanel.add(createDemoButton("Admin", "admin", "admin123"));
-        demoPanel.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
-        demoPanel.add(createDemoButton("Student", "student_cs", "student123"));
-        demoPanel.add(createDemoButton("Parent", "parent_cs", "parent123"));
-        demoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        demoBar.add(createDemoButton("Admin", "admin", "admin123"));
+        demoBar.add(createDemoButton("Faculty", "faculty_cs", "faculty123"));
+        demoBar.add(createDemoButton("Student", "student_cs", "student123"));
+        demoBar.add(createDemoButton("Parent", "parent_cs", "parent123"));
 
         // Form Fields
         txtUsername = new ModernTextField("Enter username");
@@ -169,6 +168,11 @@ public class LoginFrame extends JFrame {
         btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogin.addActionListener(e -> handleLogin());
+
+        ModernButton btnRegister = new ModernButton("Register New Account", ModernButton.Variant.OUTLINE);
+        btnRegister.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        btnRegister.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnRegister.addActionListener(e -> new RegisterDialog(LoginFrame.this, authService).setVisible(true));
 
         form.add(title);
         form.add(Box.createVerticalStrut(4));
@@ -190,36 +194,15 @@ public class LoginFrame extends JFrame {
         form.add(Box.createVerticalStrut(14));
 
         form.add(btnLogin);
+        form.add(Box.createVerticalStrut(10));
+        form.add(btnRegister);
 
         // Enter key listener for instant login
         txtUsername.addActionListener(e -> handleLogin());
         txtPassword.addActionListener(e -> handleLogin());
 
-        // Assemble Components into Frame
-        mainPanel.add(lblHeader);
-        mainPanel.add(Box.createVerticalStrut(4));
-        mainPanel.add(lblSubHeader);
-        mainPanel.add(Box.createVerticalStrut(14));
-        mainPanel.add(demoPanel);
-        mainPanel.add(Box.createVerticalStrut(16));
-
-        mainPanel.add(createFieldLabel("Username"));
-        mainPanel.add(Box.createVerticalStrut(4));
-        mainPanel.add(txtUsername);
-        mainPanel.add(Box.createVerticalStrut(12));
-
-        mainPanel.add(createFieldLabel("Password"));
-        mainPanel.add(Box.createVerticalStrut(4));
-        mainPanel.add(txtPassword);
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(lblStatus);
-        mainPanel.add(Box.createVerticalStrut(12));
-
-        mainPanel.add(btnLogin);
-        mainPanel.add(Box.createVerticalStrut(10));
-        mainPanel.add(btnRegister);
-
-        add(mainPanel);
+        container.add(form, BorderLayout.CENTER);
+        return container;
     }
 
     private JLabel createFieldLabel(String text) {

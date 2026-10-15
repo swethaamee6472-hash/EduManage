@@ -11,9 +11,10 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import javax.imageio.ImageIO;
 
 public class QRCodeUtil {
 
@@ -28,12 +29,75 @@ public class QRCodeUtil {
 
     /**
      * Reads and decodes a QR code from a BufferedImage.
+     * Uses multi-pass decoding: normal, center-cropped, inverted (for phone screens),
+     * and binarizer fallbacks.
      */
     public static String readQRCode(BufferedImage image) throws Exception {
+        if (image == null) return null;
+
+        // 1. Direct decode attempt
+        String result = decodeSingleImage(image);
+        if (result != null) return result;
+
+        // 2. Center crop (phone held in center of camera frame - avoids peripheral glare/noise)
+        int w = image.getWidth();
+        int h = image.getHeight();
+        if (w > 120 && h > 120) {
+            int cropW = (int) (w * 0.65);
+            int cropH = (int) (h * 0.65);
+            int cropX = (w - cropW) / 2;
+            int cropY = (h - cropH) / 2;
+            BufferedImage cropped = image.getSubimage(cropX, cropY, cropW, cropH);
+            result = decodeSingleImage(cropped);
+            if (result != null) return result;
+        }
+
+        // 3. Inverted colors (fixes phone screen glare / dark mode / washed out backlights)
+        BufferedImage inverted = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
+        Graphics2D g2 = inverted.createGraphics();
+        g2.drawImage(image, 0, 0, null);
+        g2.dispose();
+        byte[] pixels = ((java.awt.image.DataBufferByte) inverted.getRaster().getDataBuffer()).getData();
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = (byte) (255 - (pixels[i] & 0xFF));
+        }
+        result = decodeSingleImage(inverted);
+        if (result != null) return result;
+
+        return null;
+    }
+
+    private static String decodeSingleImage(BufferedImage image) {
+        if (image == null) return null;
+
+        java.util.Map<com.google.zxing.DecodeHintType, Object> hints = new java.util.EnumMap<>(com.google.zxing.DecodeHintType.class);
+        hints.put(com.google.zxing.DecodeHintType.TRY_HARDER, Boolean.TRUE);
+        hints.put(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS, java.util.Collections.singletonList(BarcodeFormat.QR_CODE));
+
+        MultiFormatReader reader = new MultiFormatReader();
+        reader.setHints(hints);
+
         LuminanceSource source = new BufferedImageLuminanceSource(image);
-        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-        Result result = new MultiFormatReader().decode(bitmap);
-        return result.getText();
+
+        // Try HybridBinarizer first
+        try {
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            Result res = reader.decodeWithState(bitmap);
+            if (res != null) return res.getText();
+        } catch (Exception ignored) {
+        } finally {
+            reader.reset();
+        }
+
+        // Fallback: GlobalHistogramBinarizer (superior for backlit screens and uneven lighting)
+        try {
+            BinaryBitmap bitmap = new BinaryBitmap(new com.google.zxing.common.GlobalHistogramBinarizer(source));
+            Result res = reader.decodeWithState(bitmap);
+            if (res != null) return res.getText();
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
     
     /**

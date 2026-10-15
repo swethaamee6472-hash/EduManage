@@ -26,8 +26,8 @@ public class MainDashboardFrame extends JFrame {
 
     private void initUI() {
         setTitle("EduManage - " + currentUser.getRole().getDisplayName() + " Portal");
-        setSize(1180, 780);
-        setMinimumSize(new Dimension(980, 640));
+        setSize(1280, 820);
+        setMinimumSize(new Dimension(1080, 680));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(UITheme.BG_LIGHT);
