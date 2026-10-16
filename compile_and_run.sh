@@ -1,51 +1,54 @@
+#!/usr/bin/env bash
 # EduManage - Student Data Management System
-# Run with: .\compile_and_run.sh  (PowerShell on Windows)
+# Run with: ./compile_and_run.sh        (Mac/Linux)
+# For Windows PowerShell use: .\compile_and_run.ps1
 
-$BASE_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SRC_DIR  = "$BASE_DIR\src"
-$BIN_DIR  = "$BASE_DIR\bin"
-$DATA_DIR = "$BASE_DIR\data"
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+SRC_DIR="$BASE_DIR/src"
+BIN_DIR="$BASE_DIR/bin"
+DATA_DIR="$BASE_DIR/data"
 
-if (!(Test-Path $BIN_DIR))  { New-Item -ItemType Directory -Path $BIN_DIR  | Out-Null }
-if (!(Test-Path $DATA_DIR)) { New-Item -ItemType Directory -Path $DATA_DIR | Out-Null }
+mkdir -p "$BIN_DIR"
+mkdir -p "$DATA_DIR"
 
-Write-Host "=========================================================="
-Write-Host " EduManage - Student Data Management System"
-Write-Host " Module 1: Authentication & Role Management (Swing)"
-Write-Host "=========================================================="
-Write-Host "Compiling Java source files..."
+echo "=========================================================="
+echo " EduManage - Student Data Management System"
+echo " Module 1: Authentication & Role Management (Swing)"
+echo "=========================================================="
+echo "Compiling Java source files..."
 
-# Build lib classpath
-$libJars = (Get-ChildItem "$BASE_DIR\lib\*.jar" | ForEach-Object { $_.FullName }) -join ";"
+# Build lib classpath (colon-separated on Mac/Linux)
+LIB_CP=$(find "$BASE_DIR/lib" -name "*.jar" | tr '\n' ':')
+LIB_CP="${LIB_CP%:}"  # strip trailing colon
 
 # Collect all .java source files
-$sources = Get-ChildItem -Recurse -Path $SRC_DIR -Filter "*.java" | ForEach-Object { "`"$($_.FullName)`"" }
-$sourcesFile = "$BASE_DIR\sources.txt"
-$sources | Out-File -Encoding ascii -FilePath $sourcesFile
+SOURCES_FILE="$BASE_DIR/sources.txt"
+find "$SRC_DIR" -name "*.java" > "$SOURCES_FILE"
 
 # Compile
-& javac -cp $libJars -d $BIN_DIR "@$sourcesFile"
-Remove-Item $sourcesFile -ErrorAction SilentlyContinue
+javac -cp "$LIB_CP" -d "$BIN_DIR" "@$SOURCES_FILE"
+COMPILE_EXIT=$?
+rm -f "$SOURCES_FILE"
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] Compilation failed." -ForegroundColor Red
+if [ $COMPILE_EXIT -ne 0 ]; then
+    echo "[ERROR] Compilation failed."
     exit 1
-}
+fi
 
-Write-Host "[OK] Compilation completed successfully into bin\ directory." -ForegroundColor Green
+echo "[OK] Compilation completed successfully into bin/ directory."
 
-if ($args[0] -eq "--test") {
-    Write-Host ""
-    Write-Host "Running automated verification test suite..."
-    & java -cp "$BIN_DIR;$libJars" com.sset.erp.test.TestRunner
-} else {
-    Write-Host "Launching EduManage ERP GUI..."
-    Write-Host ""
-    Write-Host "Demo Credentials for Testing:"
-    Write-Host "  • Administrator : admin / admin123"
-    Write-Host "  • Faculty       : faculty_cs / faculty123"
-    Write-Host "  • Student       : student_cs / student123"
-    Write-Host "  • Parent        : parent_cs / parent123"
-    Write-Host "=========================================================="
-    & java -cp "$BIN_DIR;$libJars" com.sset.erp.Main
-}
+if [ "$1" = "--test" ]; then
+    echo ""
+    echo "Running automated verification test suite..."
+    java -cp "$BIN_DIR:$LIB_CP" com.sset.erp.test.TestRunner
+else
+    echo "Launching EduManage ERP GUI..."
+    echo ""
+    echo "Demo Credentials for Testing:"
+    echo "  * Administrator : admin / admin123"
+    echo "  * Faculty       : faculty_cs / faculty123"
+    echo "  * Student       : student_cs / student123"
+    echo "  * Parent        : parent_cs / parent123"
+    echo "=========================================================="
+    java -cp "$BIN_DIR:$LIB_CP" com.sset.erp.Main
+fi
