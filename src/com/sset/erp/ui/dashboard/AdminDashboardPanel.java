@@ -4,6 +4,8 @@ import com.sset.erp.dto.UserRegistrationDTO;
 import com.sset.erp.model.*;
 import com.sset.erp.service.AuthService;
 import com.sset.erp.ui.LiveWebcamQRScanner;
+import com.sset.erp.ui.DashboardAnalyticsDialog;
+import com.sset.erp.ui.FeeManagementDialog;
 import com.sset.erp.ui.RegisterDialog;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
@@ -128,8 +130,18 @@ public class AdminDashboardPanel extends JPanel {
         btnRefresh.setPreferredSize(new Dimension(95, 36));
         btnRefresh.addActionListener(e -> refreshData());
 
+        ModernButton btnAnalytics = new ModernButton("Dashboard Analytics", ModernButton.Variant.OUTLINE);
+        btnAnalytics.setPreferredSize(new Dimension(175, 36));
+        btnAnalytics.addActionListener(e -> showAnalytics());
+
+        ModernButton btnFees = new ModernButton("Fee Management", ModernButton.Variant.OUTLINE);
+        btnFees.setPreferredSize(new Dimension(145, 36));
+        btnFees.addActionListener(e -> showFeeManagement());
+
         actionPanel.add(filterLabel);
         actionPanel.add(roleFilterComboBox);
+        actionPanel.add(btnAnalytics);
+        actionPanel.add(btnFees);
         actionPanel.add(btnViewQR);
         actionPanel.add(btnScanQR);
         actionPanel.add(btnAddUser);
@@ -251,6 +263,20 @@ public class AdminDashboardPanel extends JPanel {
         RegisterDialog dialog = new RegisterDialog(parentFrame, authService);
         dialog.setVisible(true);
         refreshData();
+    }
+
+    private void showAnalytics() {
+        DashboardAnalyticsDialog dialog = new DashboardAnalyticsDialog(
+                (JFrame) SwingUtilities.getWindowAncestor(this), authService);
+        dialog.setVisible(true);
+    }
+
+    private void showFeeManagement() {
+        List<StudentUser> students = authService.getUsersByRole(Role.STUDENT).stream()
+                .filter(StudentUser.class::isInstance)
+                .map(StudentUser.class::cast)
+                .toList();
+        new FeeManagementDialog(parentFrame, adminUser.getFullName(), students).setVisible(true);
     }
 
     private void toggleSelectedUser() {

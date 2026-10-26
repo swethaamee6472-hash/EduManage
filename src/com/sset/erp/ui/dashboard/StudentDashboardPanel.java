@@ -2,6 +2,10 @@ package com.sset.erp.ui.dashboard;
 
 import com.sset.erp.model.Role;
 import com.sset.erp.model.StudentUser;
+import com.sset.erp.ui.StudentAttendanceDialog;
+import com.sset.erp.ui.StudentAssessmentDialog;
+import com.sset.erp.ui.StudentNotificationsDialog;
+import com.sset.erp.ui.FeeHistoryDialog;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
@@ -110,19 +114,21 @@ public class StudentDashboardPanel extends JPanel {
         ModernCard idCard = new ModernCard(20);
         idCard.setLayout(new BorderLayout(12, 16));
 
-        JLabel idTitle = new JLabel("Digital Student Identity Card (Module 3 Preview)");
+        JLabel idTitle = new JLabel("Student Portal & Digital ID");
         idTitle.setFont(UITheme.FONT_HEADER);
         idTitle.setForeground(UITheme.TEXT_PRIMARY);
 
         JPanel idBox = createDigitalIdPreview();
 
-        JPanel modulesPreview = new JPanel(new GridLayout(2, 2, 10, 10));
+        JPanel modulesPreview = new JPanel(new GridLayout(0, 2, 10, 10));
         modulesPreview.setOpaque(false);
 
         modulesPreview.add(createActionPill("📱 Download QR", "Get personal QR for attendance", this::downloadStudentQR));
-        modulesPreview.add(createActionPill("📊 Marks & CGPA", "View internal test scores", null));
-        modulesPreview.add(createActionPill("📄 Resume Builder", "Generate ATS resume", null));
-        modulesPreview.add(createActionPill("🎯 Placement Check", "Check job eligibility", null));
+        modulesPreview.add(createActionPill("📊 Marks & CGPA", "View grades and academic performance",
+                this::showAssessmentResults));
+        modulesPreview.add(createActionPill("✅ Attendance", "View your attendance history", this::showAttendanceHistory));
+        modulesPreview.add(createActionPill("🔔 Notifications", "View notices from faculty", this::showNotifications));
+        modulesPreview.add(createActionPill("💳 Fees & Payments", "View balances and receipts", this::showFeeHistory));
 
         idCard.add(idTitle, BorderLayout.NORTH);
         idCard.add(idBox, BorderLayout.CENTER);
@@ -157,6 +163,7 @@ public class StudentDashboardPanel extends JPanel {
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
                 g2.dispose();
             }
+
         };
         card.setOpaque(false);
         card.setLayout(new BorderLayout(0, 0));
@@ -403,5 +410,21 @@ public class StudentDashboardPanel extends JPanel {
         }
         
         return p;
+    }
+
+    private void showAssessmentResults() {
+        new StudentAssessmentDialog(parentFrame, studentUser).setVisible(true);
+    }
+
+    private void showAttendanceHistory() {
+        new StudentAttendanceDialog(parentFrame, studentUser).setVisible(true);
+    }
+
+    private void showNotifications() {
+        new StudentNotificationsDialog(parentFrame, studentUser).setVisible(true);
+    }
+
+    private void showFeeHistory() {
+        new FeeHistoryDialog(parentFrame, studentUser.getRollNumber(), "Fees & Payment History").setVisible(true);
     }
 }

@@ -129,6 +129,36 @@
     "designation": "Associate Professor"
   },
   {
+    "id": "USR-STU-6FB3B6D2",
+    "username": "Subin",
+    "passwordHash": "lDSde3wcA9Arj0o5W+Tz+fSnzcSp3GtAVC3yjluhNK4=",
+    "salt": "F70T4WPrTuZno5Vpjn6B6Q==",
+    "fullName": "Subin P Saji",
+    "email": "subin@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-10-25T17:49:19.859+0530",
+    "rollNumber": "SSET24CS251",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
+    "id": "USR-STU-08560F3C",
+    "username": "Vismaya",
+    "passwordHash": "kuNKGyo4jq1q4VjSq5c3OlG7hRviLnVQUMlhtnGd5EA=",
+    "salt": "oiJRqtOMP/f7zvWtPIu+Gg==",
+    "fullName": "Vismaya Sajith",
+    "email": "vismaya@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-10-25T17:48:20.120+0530",
+    "rollNumber": "SSET25CS252",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-STU-C66DB34D",
     "username": "test_user_61681",
     "passwordHash": "ltuQaNZvBnbl+L9l2+Y6CM1oQoX82zwqxcnVFy1tFuE=",

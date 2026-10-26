@@ -11,7 +11,7 @@ if (!(Test-Path $DATA_DIR)) { New-Item -ItemType Directory -Path $DATA_DIR | Out
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " EduManage - Student Data Management System" -ForegroundColor Cyan
-Write-Host " Module 1: Authentication & Role Management (Swing)" -ForegroundColor Cyan
+Write-Host " Modules 1, 5-10: Authentication, Portals, Analytics, Notifications and Fees (Swing)" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "Compiling Java source files..."
 

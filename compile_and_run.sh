@@ -13,7 +13,7 @@ mkdir -p "$DATA_DIR"
 
 echo "=========================================================="
 echo " EduManage - Student Data Management System"
-echo " Module 1: Authentication & Role Management (Swing)"
+echo " Modules 1, 5-10: Authentication, Portals, Analytics, Notifications and Fees (Swing)"
 echo "=========================================================="
 echo "Compiling Java source files..."
 

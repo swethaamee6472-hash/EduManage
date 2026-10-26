@@ -2,10 +2,19 @@ package com.sset.erp.ui.dashboard;
 
 import com.sset.erp.model.FacultyUser;
 import com.sset.erp.model.Role;
+import com.sset.erp.ui.AssessmentManagementDialog;
+import com.sset.erp.ui.FacultyNotificationsDialog;
 import com.sset.erp.ui.LiveWebcamQRScanner;
+import com.sset.erp.model.AttendanceRecord;
+import com.sset.erp.model.NotificationType;
+import com.sset.erp.model.StudentNotification;
+import com.sset.erp.model.StudentUser;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
+import com.sset.erp.repository.FileAttendanceRepository;
+import com.sset.erp.repository.FileStudentNotificationRepository;
+import com.sset.erp.repository.FileUserRepository;
 import com.sset.erp.util.QRCodeUtil;
 import com.sset.erp.util.UITheme;
 import java.awt.*;
@@ -98,11 +107,14 @@ public class FacultyDashboardPanel extends JPanel {
         workflowTitle.setFont(UITheme.FONT_HEADER);
         workflowTitle.setForeground(UITheme.TEXT_PRIMARY);
 
-        JPanel modulesList = new JPanel(new GridLayout(3, 1, 0, 12));
+        JPanel modulesList = new JPanel(new GridLayout(4, 1, 0, 12));
         modulesList.setOpaque(false);
 
         modulesList.add(createModuleCard("Scan QR Attendance", "Scan a student's QR Code pass", "Module 4", "📷", this::scanStudentQR));
-        modulesList.add(createModuleCard("Marks & Internal Assessment", "Enter internal test scores and GPA", "Module 5", "📝", () -> showModuleStatus("Marks & Internal Assessment")));
+        modulesList.add(createModuleCard("Marks, Grade & CGPA Management",
+                "Enter marks, course credits and calculate student CGPA", "Module 5", "📝",
+                this::openAssessmentManager));
+        modulesList.add(createModuleCard("Student Notifications", "Publish notices to students", "Module 6", "🔔", this::openNotifications));
         modulesList.add(createModuleCard("Timetable & Subject Allocation", "View assigned weekly lecture periods", "Module 13", "📅", () -> showModuleStatus("Timetable & Subject Allocation")));
 
         workflowCard.add(workflowTitle, BorderLayout.NORTH);
@@ -121,15 +133,23 @@ public class FacultyDashboardPanel extends JPanel {
             "Module Status", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private void openAssessmentManager() {
+        AssessmentManagementDialog dialog = new AssessmentManagementDialog(
+                (JFrame) SwingUtilities.getWindowAncestor(this), facultyUser);
+        dialog.setVisible(true);
+    }
+
+    private void openNotifications() {
+        FacultyNotificationsDialog dialog = new FacultyNotificationsDialog(
+                (JFrame) SwingUtilities.getWindowAncestor(this), facultyUser);
+        dialog.setVisible(true);
+    }
+
     private void scanStudentQR() {
-        // Open the pure-Java live webcam QR scanner (ZXing + webcam-capture)
         LiveWebcamQRScanner scanner = new LiveWebcamQRScanner(decodedText -> {
             if (decodedText != null && !decodedText.isBlank()) {
                 if (decodedText.startsWith("STUDENT_ID:")) {
-                    String rollNumber = decodedText.substring("STUDENT_ID:".length());
-                    JOptionPane.showMessageDialog(FacultyDashboardPanel.this,
-                        "Successfully marked attendance for Student Roll No: " + rollNumber,
-                        "Attendance Success", JOptionPane.INFORMATION_MESSAGE);
+                    markStudentAttendance(decodedText.substring("STUDENT_ID:".length()).trim());
                 } else {
                     JOptionPane.showMessageDialog(FacultyDashboardPanel.this,
                         "Invalid QR Code! This is not a valid EduManage Student QR.",
@@ -138,6 +158,58 @@ public class FacultyDashboardPanel extends JPanel {
             }
         });
         scanner.setVisible(true);
+    }
+
+    private void markStudentAttendance(String rollNumber) {
+        StudentUser student = new FileUserRepository().findAll().stream()
+                .filter(StudentUser.class::isInstance)
+                .map(StudentUser.class::cast)
+                .filter(candidate -> candidate.getRollNumber().equalsIgnoreCase(rollNumber))
+                .findFirst()
+                .orElse(null);
+        if (student == null) {
+            JOptionPane.showMessageDialog(this, "No student account matches roll number: " + rollNumber,
+                    "Student Not Found", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String subject = JOptionPane.showInputDialog(this, "Enter the subject for this attendance:");
+        if (subject == null) {
+            return;
+        }
+        try {
+            AttendanceRecord requested = AttendanceRecord.create(
+                    student.getRollNumber(), subject, facultyUser.getFullName());
+            AttendanceRecord saved = new FileAttendanceRepository().save(requested);
+            boolean newlyRecorded = requested.getId().equals(saved.getId());
+            if (newlyRecorded) {
+                try {
+                    StudentNotification notification = StudentNotification.create(NotificationType.ATTENDANCE,
+                            student.getRollNumber(), "Attendance recorded: " + saved.getSubject(),
+                            "You were marked present for " + saved.getSubject() + " on "
+                                    + saved.getRecordedAt().toLocalDate() + ".",
+                            facultyUser.getFullName());
+                    new FileStudentNotificationRepository().save(notification);
+                } catch (java.io.IOException e) {
+                    JOptionPane.showMessageDialog(this,
+                            "Attendance was recorded, but the student notification could not be sent.\n"
+                                    + e.getMessage(),
+                            "Notification Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+            String message = newlyRecorded
+                    ? "Attendance marked for " + student.getFullName() + " (" + student.getRollNumber()
+                            + ") and an update was sent."
+                    : "Attendance was already marked for " + student.getRollNumber()
+                            + " in " + saved.getSubject() + " today.";
+            JOptionPane.showMessageDialog(this, message, "Attendance", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Invalid Attendance",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (java.io.IOException e) {
+            JOptionPane.showMessageDialog(this, "Unable to save attendance.\n" + e.getMessage(),
+                    "Storage Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private JPanel createModuleCard(String title, String desc, String badge, String icon, Runnable action) {

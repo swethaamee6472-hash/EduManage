@@ -2,11 +2,22 @@ package com.sset.erp.ui.dashboard;
 
 import com.sset.erp.model.ParentUser;
 import com.sset.erp.model.Role;
+import com.sset.erp.model.AssessmentRecord;
+import com.sset.erp.model.AttendanceRecord;
+import com.sset.erp.model.AcademicPerformanceSummary;
+import com.sset.erp.model.FeeCharge;
+import com.sset.erp.repository.FileAssessmentRepository;
+import com.sset.erp.repository.FileAttendanceRepository;
+import com.sset.erp.repository.FileFeeRepository;
+import com.sset.erp.ui.FeeHistoryDialog;
+import com.sset.erp.ui.ParentProgressDialog;
 import com.sset.erp.ui.components.BadgeLabel;
+import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
 import com.sset.erp.util.UITheme;
 import java.awt.*;
 import java.util.Map;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
@@ -91,12 +102,26 @@ public class ParentDashboardPanel extends JPanel {
         wardTitle.setFont(UITheme.FONT_HEADER);
         wardTitle.setForeground(UITheme.TEXT_PRIMARY);
 
-        JPanel statusList = new JPanel(new GridLayout(3, 1, 0, 12));
+        JPanel statusList = new JPanel(new GridLayout(5, 1, 0, 12));
         statusList.setOpaque(false);
 
-        statusList.add(createStatusRow("Overall Attendance", "89.4% (Eligible for Exams)", UITheme.SUCCESS, "✅"));
-        statusList.add(createStatusRow("Semester Fee Status", "Tuition & Bus Fees Cleared", UITheme.INFO, "💳"));
-        statusList.add(createStatusRow("Faculty Advisor", "Dr. Litty Koshy (Dept. of CSE)", UITheme.PRIMARY, "📞"));
+        statusList.add(createStatusRow("Attendance", "Loading attendance records...", UITheme.INFO, "✅"));
+        statusList.add(createStatusRow("Academic Progress", "Loading marks and assessments...", UITheme.INFO, "📊"));
+        statusList.add(createStatusRow("Fees", "Loading fee balance...", UITheme.INFO, "💳"));
+        ModernButton progressButton = new ModernButton("View Attendance & Marks", ModernButton.Variant.PRIMARY);
+        progressButton.addActionListener(e -> {
+            openWardProgress();
+            refreshStatusRows(statusList);
+        });
+        statusList.add(progressButton);
+        ModernButton feesButton = new ModernButton("View Fees & Payments", ModernButton.Variant.OUTLINE);
+        feesButton.addActionListener(e -> {
+            openWardFees();
+            refreshStatusRows(statusList);
+        });
+        statusList.add(feesButton);
+
+        refreshStatusRows(statusList);
 
         wardCard.add(wardTitle, BorderLayout.NORTH);
         wardCard.add(statusList, BorderLayout.CENTER);
@@ -106,6 +131,65 @@ public class ParentDashboardPanel extends JPanel {
 
         add(bannerCard, BorderLayout.NORTH);
         add(grid, BorderLayout.CENTER);
+    }
+
+    private void refreshStatusRows(JPanel statusList) {
+        try {
+            List<AttendanceRecord> attendance = new FileAttendanceRepository()
+                    .findByRollNumber(parentUser.getStudentRollNumber());
+            List<AssessmentRecord> assessments = new FileAssessmentRepository()
+                    .findByRollNumber(parentUser.getStudentRollNumber());
+            FileFeeRepository feeRepository = new FileFeeRepository();
+            List<FeeCharge> feeCharges = feeRepository.findChargesByStudent(parentUser.getStudentRollNumber());
+            double earned = 0;
+            double possible = 0;
+            for (AssessmentRecord record : assessments) {
+                earned += record.getScore();
+                possible += record.getMaximumScore();
+            }
+            String attendanceText = attendance.size() + " class record"
+                    + (attendance.size() == 1 ? "" : "s")
+                    + " (total scheduled classes unavailable)";
+            String progressText = possible == 0
+                    ? assessments.size() + " assessments; no marks recorded"
+                    : String.format("CGPA %.2f / 10; %.1f%% overall marks across %d assessments",
+                            AcademicPerformanceSummary.from(assessments).getCgpa(),
+                            earned / possible * 100.0, assessments.size());
+            java.math.BigDecimal outstanding = java.math.BigDecimal.ZERO;
+            for (FeeCharge charge : feeCharges) {
+                outstanding = outstanding.add(charge.getAmount().subtract(feeRepository.getPaidAmount(charge.getId())));
+            }
+            String feeText = feeCharges.size() + " fee charge" + (feeCharges.size() == 1 ? "" : "s")
+                    + "; INR " + outstanding.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
+                    + " outstanding";
+            statusList.removeAll();
+            statusList.add(createStatusRow("Attendance", attendanceText, UITheme.INFO, "✅"));
+            statusList.add(createStatusRow("Academic Progress", progressText, UITheme.PRIMARY, "📊"));
+            statusList.add(createStatusRow("Fees", feeText, UITheme.INFO, "💳"));
+            ModernButton progressButton = new ModernButton("View Attendance & Marks", ModernButton.Variant.PRIMARY);
+            progressButton.addActionListener(e -> openWardProgress());
+            statusList.add(progressButton);
+            ModernButton feesButton = new ModernButton("View Fees & Payments", ModernButton.Variant.OUTLINE);
+            feesButton.addActionListener(e -> {
+                openWardFees();
+                refreshStatusRows(statusList);
+            });
+            statusList.add(feesButton);
+            statusList.revalidate();
+            statusList.repaint();
+        } catch (java.io.IOException e) {
+            JOptionPane.showMessageDialog(this, "Unable to load ward progress.\n" + e.getMessage(),
+                    "Storage Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void openWardProgress() {
+        new ParentProgressDialog((JFrame) SwingUtilities.getWindowAncestor(this), parentUser).setVisible(true);
+    }
+
+    private void openWardFees() {
+        new FeeHistoryDialog(SwingUtilities.getWindowAncestor(this), parentUser.getStudentRollNumber(),
+                "Ward Fees & Payment History").setVisible(true);
     }
 
     private JPanel createStatusRow(String title, String statusText, Color color, String icon) {
