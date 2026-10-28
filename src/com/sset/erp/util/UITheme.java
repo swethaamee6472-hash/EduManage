@@ -1,7 +1,11 @@
 package com.sset.erp.util;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.swing.BorderFactory;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 
 /**
  * Centralized Design System & Theme configuration inspired by Google Antigravity.
@@ -50,6 +54,68 @@ public final class UITheme {
     public static final Font FONT_BODY = new Font("SansSerif", Font.PLAIN, 13);
     public static final Font FONT_SMALL = new Font("SansSerif", Font.PLAIN, 11);
     public static final Font FONT_BADGE = new Font("SansSerif", Font.BOLD, 11);
+
+    /**
+     * Installs polished global Swing defaults (fonts, tables, dialogs, tooltips, accents)
+     * on top of the system look & feel. Call once from Main after the L&F is set.
+     */
+    public static void installGlobal() {
+        // Consistent typography across every widget the app does not style explicitly
+        UIManager.put("Label.font", FONT_BODY);
+        UIManager.put("TextField.font", FONT_BODY);
+        UIManager.put("PasswordField.font", FONT_BODY);
+        UIManager.put("TextArea.font", FONT_BODY);
+        UIManager.put("ComboBox.font", FONT_BODY);
+        UIManager.put("Button.font", FONT_BODY);
+        UIManager.put("ToggleButton.font", FONT_BODY);
+        UIManager.put("CheckBox.font", FONT_BODY);
+        UIManager.put("RadioButton.font", FONT_BODY);
+        UIManager.put("List.font", FONT_BODY);
+        UIManager.put("Spinner.font", FONT_BODY);
+        UIManager.put("TitledBorder.font", FONT_BODY_BOLD);
+        UIManager.put("TabbedPane.font", FONT_BODY_BOLD);
+
+        // Clean data tables with soft selection and no harsh focus rectangles
+        UIManager.put("Table.font", FONT_BODY);
+        UIManager.put("Table.rowHeight", 30);
+        UIManager.put("Table.focusCellHighlightBorder", new EmptyBorder(1, 3, 1, 3));
+
+        // JOptionPane dialogs: themed canvas + readable message/button/title fonts
+        UIManager.put("OptionPane.background", BG_LIGHT);
+        UIManager.put("OptionPane.messageForeground", TEXT_PRIMARY);
+        UIManager.put("OptionPane.messageFont", FONT_BODY);
+        UIManager.put("OptionPane.buttonFont", FONT_BODY_BOLD);
+        UIManager.put("OptionPane.titleFont", FONT_SUBHEADER);
+
+        // Subtle tooltips matching the light theme
+        UIManager.put("ToolTip.font", FONT_SMALL);
+        UIManager.put("ToolTip.background", BG_LIGHT);
+        UIManager.put("ToolTip.foreground", TEXT_PRIMARY);
+        UIManager.put("ToolTip.border", BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER, 1),
+            new EmptyBorder(4, 8, 4, 8)
+        ));
+    }
+
+    /**
+     * Renders the EduManage graduation-cap app icon used for windows and the dock.
+     */
+    public static Image createAppIcon() {
+        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = img.createGraphics();
+        applyQualityRendering(g2);
+        g2.setColor(PRIMARY);
+        g2.fillRoundRect(0, 0, 64, 64, 16, 16);
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("SansSerif", Font.BOLD, 36));
+        FontMetrics fm = g2.getFontMetrics();
+        String monogram = "E";
+        int x = (64 - fm.stringWidth(monogram)) / 2;
+        int y = (64 - fm.getHeight()) / 2 + fm.getAscent();
+        g2.drawString(monogram, x, y);
+        g2.dispose();
+        return img;
+    }
 
     /**
      * Creates a rounded border with specified radius and color.

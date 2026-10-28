@@ -20,6 +20,9 @@ public class UserRegistrationDTO {
     private String employeeId;       // Faculty
     private String department;       // Faculty & Student
     private String designation;      // Faculty
+    private String advisorDepartment;// Faculty Class Advisor
+    private int advisorSemester;     // Faculty Class Advisor
+    private String advisorBatch;     // Faculty Class Advisor
     private String rollNumber;       // Student
     private int semester;            // Student
     private String batch;            // Student
@@ -29,6 +32,7 @@ public class UserRegistrationDTO {
     public UserRegistrationDTO() {
         this.role = Role.STUDENT;
         this.semester = 3;
+        this.advisorSemester = 3;
     }
 
     /**
@@ -126,6 +130,15 @@ public class UserRegistrationDTO {
 
     public String getDesignation() { return designation; }
     public void setDesignation(String designation) { this.designation = designation; }
+
+    public String getAdvisorDepartment() { return advisorDepartment; }
+    public void setAdvisorDepartment(String advisorDepartment) { this.advisorDepartment = advisorDepartment; }
+
+    public int getAdvisorSemester() { return advisorSemester; }
+    public void setAdvisorSemester(int advisorSemester) { this.advisorSemester = advisorSemester; }
+
+    public String getAdvisorBatch() { return advisorBatch; }
+    public void setAdvisorBatch(String advisorBatch) { this.advisorBatch = advisorBatch; }
 
     public String getRollNumber() { return rollNumber; }
     public void setRollNumber(String rollNumber) { this.rollNumber = rollNumber; }

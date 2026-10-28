@@ -15,6 +15,7 @@ public interface AuthService {
     AuthResult login(String username, String password);
     AuthResult register(UserRegistrationDTO dto);
     boolean toggleUserStatus(String userId);
+    boolean deleteUser(String userId);
     boolean updatePassword(String username, String currentPassword, String newPassword);
     List<User> getAllUsers();
     List<User> getUsersByRole(Role role);

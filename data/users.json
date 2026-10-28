@@ -77,8 +77,8 @@
     "username": "admin",
     "passwordHash": "VSx3t/m0bWKk35rIFb2NhCj2jOLe/8AFETGJd91rPns=",
     "salt": "dVWO2ClOf845w7LW1dZvxw==",
-    "fullName": "Dr. Litty Koshy",
-    "email": "littykoshy@gmail.com",
+    "fullName": "admin",
+    "email": "admin@gmail.com",
     "role": "ADMIN",
     "active": true,
     "createdAt": "2026-09-12T14:00:07.394+0530",
@@ -126,7 +126,10 @@
     "createdAt": "2026-09-12T14:00:07.394+0530",
     "employeeId": "EMP-CS-104",
     "department": "Computer Science & Engineering",
-    "designation": "Associate Professor"
+    "designation": "Associate Professor",
+    "advisorDepartment": "Computer Science & Engineering",
+    "advisorSemester": 3,
+    "advisorBatch": "2024-2028 (CS4)"
   },
   {
     "id": "USR-STU-6FB3B6D2",
@@ -204,6 +207,21 @@
     "batch": "2024-2028 (CS4)"
   },
   {
+    "id": "USR-STU-84A12D80",
+    "username": "saran12",
+    "passwordHash": "zV83/tsDCRG813K20mrobIesQ/l5HOi1IrdHfU+85Bo=",
+    "salt": "f10LMb51IAxbZwTqjRpdrw==",
+    "fullName": "saran",
+    "email": "saran123@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-10-27T14:00:55.410+0530",
+    "rollNumber": "25",
+    "department": "Computer Science & Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (CS4)"
+  },
+  {
     "id": "USR-STU-8C25B7ED",
     "username": "test_ragendu",
     "passwordHash": "clZL7neDybK3I4+5ByAWUUcdWV6zXc5s9yRU3PHVoGA=",
@@ -262,5 +280,65 @@
     "department": "Computer Science & Engineering",
     "semester": 3,
     "batch": "2024-2028 (CS4)"
+  },
+  {
+    "id": "USR-STU-S501",
+    "username": "kavya_s5",
+    "passwordHash": "yMPJUMsx2Mdvo/+8W00JXC+MEdJTRR0GfMV/TldSsyI=",
+    "salt": "vG0SoPeY2R3Cf0elN1GgVA==",
+    "fullName": "Kavya Menon",
+    "email": "kavya.menon@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-12T14:00:07.394+0530",
+    "rollNumber": "SSET22CS010",
+    "department": "Computer Science & Engineering",
+    "semester": 5,
+    "batch": "2023-2027 (CS3)"
+  },
+  {
+    "id": "USR-STU-S502",
+    "username": "aditya_s5",
+    "passwordHash": "yMPJUMsx2Mdvo/+8W00JXC+MEdJTRR0GfMV/TldSsyI=",
+    "salt": "vG0SoPeY2R3Cf0elN1GgVA==",
+    "fullName": "Aditya Varma",
+    "email": "aditya.varma@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-12T14:00:07.394+0530",
+    "rollNumber": "SSET22CS025",
+    "department": "Computer Science & Engineering",
+    "semester": 5,
+    "batch": "2023-2027 (CS3)"
+  },
+  {
+    "id": "USR-STU-EC01",
+    "username": "ananya_ec",
+    "passwordHash": "yMPJUMsx2Mdvo/+8W00JXC+MEdJTRR0GfMV/TldSsyI=",
+    "salt": "vG0SoPeY2R3Cf0elN1GgVA==",
+    "fullName": "Ananya Rajesh",
+    "email": "ananya.rajesh@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-12T14:00:07.394+0530",
+    "rollNumber": "SSET24EC008",
+    "department": "Electronics & Communication Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (EC1)"
+  },
+  {
+    "id": "USR-STU-EC02",
+    "username": "rohan_ec",
+    "passwordHash": "yMPJUMsx2Mdvo/+8W00JXC+MEdJTRR0GfMV/TldSsyI=",
+    "salt": "vG0SoPeY2R3Cf0elN1GgVA==",
+    "fullName": "Rohan Thomas",
+    "email": "rohan.thomas@gmail.com",
+    "role": "STUDENT",
+    "active": true,
+    "createdAt": "2026-09-12T14:00:07.394+0530",
+    "rollNumber": "SSET24EC019",
+    "department": "Electronics & Communication Engineering",
+    "semester": 3,
+    "batch": "2024-2028 (EC1)"
   }
 ]

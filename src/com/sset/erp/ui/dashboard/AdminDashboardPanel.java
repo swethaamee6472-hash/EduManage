@@ -7,6 +7,8 @@ import com.sset.erp.ui.LiveWebcamQRScanner;
 import com.sset.erp.ui.DashboardAnalyticsDialog;
 import com.sset.erp.ui.FeeManagementDialog;
 import com.sset.erp.ui.RegisterDialog;
+import com.sset.erp.ui.SubjectAllocationDialog;
+import com.sset.erp.ui.TimetableManagementDialog;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
@@ -45,6 +47,7 @@ public class AdminDashboardPanel extends JPanel {
     private JTable userTable;
     private DefaultTableModel tableModel;
     private JComboBox<String> roleFilterComboBox;
+    private ModernButton btnFees;
 
     public AdminDashboardPanel(AuthService authService, AdminUser adminUser, Frame parentFrame) {
         this.authService = authService;
@@ -90,8 +93,9 @@ public class AdminDashboardPanel extends JPanel {
         tableTitle.setForeground(UITheme.TEXT_PRIMARY);
         titleRow.add(tableTitle, BorderLayout.WEST);
 
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        actionPanel.setOpaque(false);
+        // Row A: Analytics & Module Launchers
+        JPanel moduleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        moduleRow.setOpaque(false);
 
         JLabel filterLabel = new JLabel("Filter Role:");
         filterLabel.setFont(UITheme.FONT_BODY_BOLD);
@@ -104,19 +108,39 @@ public class AdminDashboardPanel extends JPanel {
         roleFilterComboBox.setPreferredSize(new Dimension(120, 36));
         roleFilterComboBox.addActionListener(e -> applyFilter());
 
-        ModernButton btnViewQR = new ModernButton("View / Save QR", ModernButton.Variant.OUTLINE);
-        btnViewQR.setPreferredSize(new Dimension(140, 36));
-        btnViewQR.addActionListener(e -> viewOrSaveSelectedUserQR());
+        ModernButton btnAnalytics = new ModernButton("Dashboard Analytics", ModernButton.Variant.OUTLINE);
+        btnAnalytics.setPreferredSize(new Dimension(175, 36));
+        btnAnalytics.addActionListener(e -> showAnalytics());
 
-        ModernButton btnDownloadAllQR = new ModernButton("Download All QR", ModernButton.Variant.OUTLINE);
-        btnDownloadAllQR.setPreferredSize(new Dimension(145, 36));
-        btnDownloadAllQR.setToolTipText("Save a ZIP containing a QR PNG for every user account");
-        btnDownloadAllQR.addActionListener(e -> downloadAllUserQRs());
-        titleRow.add(btnDownloadAllQR, BorderLayout.EAST);
+        btnFees = new ModernButton("💳 Fee Management", ModernButton.Variant.OUTLINE);
+        btnFees.setPreferredSize(new Dimension(170, 36));
+        btnFees.addActionListener(e -> {
+            showFeeManagement();
+            refreshData();
+        });
 
-        ModernButton btnScanQR = new ModernButton("📷 Scan QR", ModernButton.Variant.PRIMARY);
-        btnScanQR.setPreferredSize(new Dimension(120, 36));
-        btnScanQR.addActionListener(e -> scanUserQR());
+        ModernButton btnTimetable = new ModernButton("Timetable", ModernButton.Variant.OUTLINE);
+        btnTimetable.setPreferredSize(new Dimension(110, 36));
+        btnTimetable.addActionListener(e -> showTimetableManagement());
+
+        ModernButton btnSubjectAlloc = new ModernButton("Subject Allocation", ModernButton.Variant.OUTLINE);
+        btnSubjectAlloc.setPreferredSize(new Dimension(160, 36));
+        btnSubjectAlloc.addActionListener(e -> showSubjectAllocation());
+
+        moduleRow.add(filterLabel);
+        moduleRow.add(roleFilterComboBox);
+        moduleRow.add(btnAnalytics);
+        moduleRow.add(btnFees);
+        moduleRow.add(btnTimetable);
+        moduleRow.add(btnSubjectAlloc);
+
+        // Row B: User Management (creating/removing accounts is admin-only)
+        JPanel userRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        userRow.setOpaque(false);
+
+        JLabel userMgrLabel = new JLabel("User Management:");
+        userMgrLabel.setFont(UITheme.FONT_BODY_BOLD);
+        userMgrLabel.setForeground(UITheme.TEXT_SECONDARY);
 
         ModernButton btnAddUser = new ModernButton("+ Add User", ModernButton.Variant.PRIMARY);
         btnAddUser.setPreferredSize(new Dimension(120, 36));
@@ -126,31 +150,41 @@ public class AdminDashboardPanel extends JPanel {
         btnToggleStatus.setPreferredSize(new Dimension(130, 36));
         btnToggleStatus.addActionListener(e -> toggleSelectedUser());
 
+        ModernButton btnDeleteUser = new ModernButton("Delete User", ModernButton.Variant.DANGER);
+        btnDeleteUser.setPreferredSize(new Dimension(120, 36));
+        btnDeleteUser.addActionListener(e -> deleteSelectedUser());
+
+        ModernButton btnViewQR = new ModernButton("View / Save QR", ModernButton.Variant.OUTLINE);
+        btnViewQR.setPreferredSize(new Dimension(140, 36));
+        btnViewQR.addActionListener(e -> viewOrSaveSelectedUserQR());
+
+        ModernButton btnScanQR = new ModernButton("📷 Scan QR", ModernButton.Variant.PRIMARY);
+        btnScanQR.setPreferredSize(new Dimension(120, 36));
+        btnScanQR.addActionListener(e -> scanUserQR());
+
+        ModernButton btnDownloadAllQR = new ModernButton("Download All QR", ModernButton.Variant.OUTLINE);
+        btnDownloadAllQR.setPreferredSize(new Dimension(145, 36));
+        btnDownloadAllQR.setToolTipText("Save a ZIP containing a QR PNG for every user account");
+        btnDownloadAllQR.addActionListener(e -> downloadAllUserQRs());
+
         ModernButton btnRefresh = new ModernButton("Refresh", ModernButton.Variant.GHOST);
         btnRefresh.setPreferredSize(new Dimension(95, 36));
         btnRefresh.addActionListener(e -> refreshData());
 
-        ModernButton btnAnalytics = new ModernButton("Dashboard Analytics", ModernButton.Variant.OUTLINE);
-        btnAnalytics.setPreferredSize(new Dimension(175, 36));
-        btnAnalytics.addActionListener(e -> showAnalytics());
-
-        ModernButton btnFees = new ModernButton("Fee Management", ModernButton.Variant.OUTLINE);
-        btnFees.setPreferredSize(new Dimension(145, 36));
-        btnFees.addActionListener(e -> showFeeManagement());
-
-        actionPanel.add(filterLabel);
-        actionPanel.add(roleFilterComboBox);
-        actionPanel.add(btnAnalytics);
-        actionPanel.add(btnFees);
-        actionPanel.add(btnViewQR);
-        actionPanel.add(btnScanQR);
-        actionPanel.add(btnAddUser);
-        actionPanel.add(btnToggleStatus);
-        actionPanel.add(btnRefresh);
+        userRow.add(userMgrLabel);
+        userRow.add(btnAddUser);
+        userRow.add(btnToggleStatus);
+        userRow.add(btnDeleteUser);
+        userRow.add(btnViewQR);
+        userRow.add(btnScanQR);
+        userRow.add(btnDownloadAllQR);
+        userRow.add(btnRefresh);
 
         toolbarPanel.add(titleRow);
         toolbarPanel.add(Box.createVerticalStrut(6));
-        toolbarPanel.add(actionPanel);
+        toolbarPanel.add(moduleRow);
+        toolbarPanel.add(Box.createVerticalStrut(4));
+        toolbarPanel.add(userRow);
 
         // Table Setup
         String[] columns = {"User ID", "Username", "Full Name", "Email", "Role", "Status", "Registered Date"};
@@ -231,6 +265,24 @@ public class AdminDashboardPanel extends JPanel {
         lblStudentCount.setText(String.valueOf(authService.getUserCountByRole(Role.STUDENT)));
         lblParentCount.setText(String.valueOf(authService.getUserCountByRole(Role.PARENT)));
 
+        try {
+            com.sset.erp.repository.FileFeeRepository feeRepo = new com.sset.erp.repository.FileFeeRepository();
+            long pendingCount = 0;
+            for (com.sset.erp.model.FeeCharge c : feeRepo.findCharges()) {
+                if (c.getAmount().subtract(feeRepo.getPaidAmount(c.getId())).signum() > 0) {
+                    pendingCount++;
+                }
+            }
+            if (btnFees != null) {
+                if (pendingCount > 0) {
+                    btnFees.setText("💳 Fees (" + pendingCount + " Pending)");
+                    btnFees.setToolTipText(pendingCount + " student fee charge(s) currently pending or overdue");
+                } else {
+                    btnFees.setText("💳 Fee Management");
+                }
+            }
+        } catch (Exception ignored) {}
+
         applyFilter();
     }
 
@@ -279,6 +331,14 @@ public class AdminDashboardPanel extends JPanel {
         new FeeManagementDialog(parentFrame, adminUser.getFullName(), students).setVisible(true);
     }
 
+    private void showTimetableManagement() {
+        new TimetableManagementDialog((JFrame) SwingUtilities.getWindowAncestor(this)).setVisible(true);
+    }
+
+    private void showSubjectAllocation() {
+        new SubjectAllocationDialog((JFrame) SwingUtilities.getWindowAncestor(this)).setVisible(true);
+    }
+
     private void toggleSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -298,6 +358,49 @@ public class AdminDashboardPanel extends JPanel {
         if (success) {
             refreshData();
             JOptionPane.showMessageDialog(this, "Status for user '" + username + "' updated successfully.", "Status Updated", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void deleteSelectedUser() {
+        int selectedRow = userTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user from the table to delete.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String userId = (String) tableModel.getValueAt(selectedRow, 0);
+        String username = (String) tableModel.getValueAt(selectedRow, 1);
+        String fullName = (String) tableModel.getValueAt(selectedRow, 2);
+
+        if (username.equalsIgnoreCase(adminUser.getUsername())) {
+            JOptionPane.showMessageDialog(this, "You cannot delete your own administrative account.", "Action Prohibited", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        boolean confirmed = false;
+        Optional<User> optUser = authService.getUserById(userId);
+        if (optUser.isPresent()) {
+            User u = optUser.get();
+            int choice = JOptionPane.showConfirmDialog(this,
+                    "Permanently delete user account?\n\n" +
+                    "• Full Name: " + fullName + "\n" +
+                    "• Username: " + username + "\n" +
+                    "• Role: " + u.getRole().getDisplayName() + "\n\n" +
+                    "This action cannot be undone.",
+                    "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            confirmed = (choice == JOptionPane.YES_OPTION);
+        }
+
+        if (!confirmed) {
+            return;
+        }
+
+        boolean success = authService.deleteUser(userId);
+        if (success) {
+            refreshData();
+            JOptionPane.showMessageDialog(this, "User '" + username + "' deleted successfully.", "User Deleted", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to delete user '" + username + "'.", "Delete Failed", JOptionPane.ERROR_MESSAGE);
         }
     }
 

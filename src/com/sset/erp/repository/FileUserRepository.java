@@ -53,18 +53,19 @@ public class FileUserRepository implements UserRepository {
     private void seedInitialUsers() {
         userCache.clear();
 
-        // 1. Admin: Dr. Litty Koshy
+        // 1. Admin: admin
         AdminUser admin = new AdminUser(
             "USR-ADM-001", "admin", "admin123",
-            "Dr. Litty Koshy", "littykoshy@gmail.com",
+            "admin", "admin@gmail.com",
             "System Administrator"
         );
 
-        // 2. Faculty: Prof. Rajesh Kumar
+        // 2. Faculty: Prof. Rajesh Kumar (Class Advisor of S3 CS4)
         FacultyUser faculty = new FacultyUser(
             "USR-FAC-001", "faculty_cs", "faculty123",
             "Prof. Rajesh Kumar", "rajeshk@gmail.com",
-            "EMP-CS-104", "Computer Science & Engineering", "Associate Professor"
+            "EMP-CS-104", "Computer Science & Engineering", "Associate Professor",
+            "Computer Science & Engineering", 3, "2024-2028 (CS4)"
         );
 
         // 3. Student: Swetha Sathyan
@@ -112,7 +113,10 @@ public class FileUserRepository implements UserRepository {
                     FacultyUser f = (FacultyUser) u;
                     sb.append(",\n    \"employeeId\": \"").append(escape(f.getEmployeeId())).append("\",\n");
                     sb.append("    \"department\": \"").append(escape(f.getDepartment())).append("\",\n");
-                    sb.append("    \"designation\": \"").append(escape(f.getDesignation())).append("\"\n");
+                    sb.append("    \"designation\": \"").append(escape(f.getDesignation())).append("\",\n");
+                    sb.append("    \"advisorDepartment\": \"").append(escape(f.getAdvisorDepartment())).append("\",\n");
+                    sb.append("    \"advisorSemester\": ").append(f.getAdvisorSemester()).append(",\n");
+                    sb.append("    \"advisorBatch\": \"").append(escape(f.getAdvisorBatch())).append("\"\n");
                 } else if (u instanceof StudentUser) {
                     StudentUser s = (StudentUser) u;
                     sb.append(",\n    \"rollNumber\": \"").append(escape(s.getRollNumber())).append("\",\n");
@@ -168,10 +172,15 @@ public class FileUserRepository implements UserRepository {
                                 map.getOrDefault("adminLevel", "Administrator"));
                         break;
                     case FACULTY:
+                        int advSem = 3;
+                        try { advSem = Integer.parseInt(map.getOrDefault("advisorSemester", "3")); } catch (NumberFormatException ignored) {}
                         user = new FacultyUser(id, username, passwordHash, salt, fullName, email, active, createdAt,
                                 map.getOrDefault("employeeId", "EMP-000"),
                                 map.getOrDefault("department", "CSE"),
-                                map.getOrDefault("designation", "Faculty"));
+                                map.getOrDefault("designation", "Faculty"),
+                                map.getOrDefault("advisorDepartment", map.getOrDefault("department", "Computer Science & Engineering")),
+                                advSem,
+                                map.getOrDefault("advisorBatch", "2024-2028 (CS4)"));
                         break;
                     case STUDENT:
                         int sem = 1;

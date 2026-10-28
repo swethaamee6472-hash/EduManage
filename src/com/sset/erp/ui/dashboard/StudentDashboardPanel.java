@@ -5,6 +5,7 @@ import com.sset.erp.model.StudentUser;
 import com.sset.erp.ui.StudentAttendanceDialog;
 import com.sset.erp.ui.StudentAssessmentDialog;
 import com.sset.erp.ui.StudentNotificationsDialog;
+import com.sset.erp.ui.StudentTimetableDialog;
 import com.sset.erp.ui.FeeHistoryDialog;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
@@ -123,12 +124,33 @@ public class StudentDashboardPanel extends JPanel {
         JPanel modulesPreview = new JPanel(new GridLayout(0, 2, 10, 10));
         modulesPreview.setOpaque(false);
 
+        String feeSubtitle = "View balances and receipts";
+        try {
+            com.sset.erp.repository.FileFeeRepository feeRepo = new com.sset.erp.repository.FileFeeRepository();
+            java.util.List<com.sset.erp.model.FeeCharge> charges = feeRepo.findChargesByStudent(studentUser.getRollNumber());
+            java.math.BigDecimal outstanding = java.math.BigDecimal.ZERO;
+            int pendingCount = 0;
+            for (com.sset.erp.model.FeeCharge c : charges) {
+                java.math.BigDecimal bal = c.getAmount().subtract(feeRepo.getPaidAmount(c.getId()));
+                if (bal.signum() > 0) {
+                    outstanding = outstanding.add(bal);
+                    pendingCount++;
+                }
+            }
+            if (pendingCount > 0) {
+                feeSubtitle = "⚠️ INR " + outstanding.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() + " pending";
+            } else if (!charges.isEmpty()) {
+                feeSubtitle = "✅ All dues cleared";
+            }
+        } catch (Exception ignored) {}
+
         modulesPreview.add(createActionPill("📱 Download QR", "Get personal QR for attendance", this::downloadStudentQR));
         modulesPreview.add(createActionPill("📊 Marks & CGPA", "View grades and academic performance",
                 this::showAssessmentResults));
         modulesPreview.add(createActionPill("✅ Attendance", "View your attendance history", this::showAttendanceHistory));
         modulesPreview.add(createActionPill("🔔 Notifications", "View notices from faculty", this::showNotifications));
-        modulesPreview.add(createActionPill("💳 Fees & Payments", "View balances and receipts", this::showFeeHistory));
+        modulesPreview.add(createActionPill("💳 Fees & Payments", feeSubtitle, this::showFeeHistory));
+        modulesPreview.add(createActionPill("📅 Timetable & Courses", "View weekly schedule & subjects", this::showTimetable));
 
         idCard.add(idTitle, BorderLayout.NORTH);
         idCard.add(idBox, BorderLayout.CENTER);
@@ -426,5 +448,10 @@ public class StudentDashboardPanel extends JPanel {
 
     private void showFeeHistory() {
         new FeeHistoryDialog(parentFrame, studentUser.getRollNumber(), "Fees & Payment History").setVisible(true);
+    }
+
+    private void showTimetable() {
+        new StudentTimetableDialog(parentFrame, studentUser.getDepartment(), studentUser.getSemester(),
+                studentUser.getBatch(), studentUser.getRollNumber(), studentUser.getFullName()).setVisible(true);
     }
 }

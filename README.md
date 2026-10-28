@@ -9,7 +9,7 @@
 ## 🎯 Project Overview
 This project is an enterprise-grade **College Student Data Management System (ERP)** developed in Java demonstrating core **Object-Oriented Programming (OOP) concepts**.
 
-This repository contains **Module 1: Authentication & Role Management (Admin, Faculty, Student, Parent)**, **Module 5: Marks, Grade & CGPA Management**, **Module 6: Student Portal**, **Module 7: Parent Portal**, **Module 8: Dashboard Analytics**, **Module 9: Instant Notifications**, and **Module 10: Fee Management**, built as an interactive desktop GUI application using **Java Swing**.
+This repository contains **Module 1: Authentication & Role Management (Admin, Faculty, Student, Parent)**, **Module 5: Marks, Grade & CGPA Management**, **Module 6: Student Portal**, **Module 7: Parent Portal**, **Module 8: Dashboard Analytics**, **Module 9: Instant Notifications**, **Module 10: Fee Management**, and **Module 11: Timetable & Subject Allocation**, built as an interactive desktop GUI application using **Java Swing**.
 
 ### Module 5: Marks, Grade & CGPA Management
 - Faculty can add, review, edit, and delete a student's assessment marks, including subject credits.
@@ -50,6 +50,17 @@ This repository contains **Module 1: Authentication & Role Management (Admin, Fa
 - Payments are recorded by staff; this module does not process online transactions or collect money.
 - Charges and payment records persist in `data/fee_charges.tsv` and `data/fee_payments.tsv`.
 
+### Module 11: Timetable & Subject Allocation
+- Administrators can manage the academic course catalogue (`Subject`), assign faculty instructors to subjects (`SubjectAllocation`), and schedule weekly periods (`TimetableEntry`).
+- Automated multi-level conflict detection:
+  - **Faculty Conflict**: Prevents double-booking an instructor across overlapping classes/rooms.
+  - **Class Overlap**: Prevents assigning multiple subjects to the same semester/batch in the same period.
+  - **Classroom Conflict**: Prevents room collisions across different courses.
+- Faculty can view their personalized weekly teaching schedule and list of allocated subjects from their dashboard.
+- Students can view their complete weekly timetable, today's lecture schedule, and enrolled courses with instructor details.
+- Parents can review the complete class timetable for their linked ward.
+- Data persists in `data/subjects.tsv`, `data/subject_allocations.tsv`, and `data/timetable.tsv`.
+
 ---
 
 ## 🚀 Quick Start (1-Command Execution)
@@ -75,7 +86,7 @@ For quick evaluation and viva demonstrations, the login screen includes **Quick 
 
 | Role | Username | Password | User Profile Details |
 |------|----------|----------|----------------------|
-| **Administrator** | `admin` | `admin123` | **Dr. Litty Koshy** (Project Coordinator / HOD) |
+| **Administrator** | `admin` | `admin123` | **admin** (System Administrator) |
 | **Faculty** | `faculty_cs` | `faculty123` | **Prof. Rajesh Kumar** (Assoc. Professor, CSE) |
 | **Student** | `student_cs` | `student123` | **Swetha Sathyan** (Roll: `SSET24CS042`, S3 CS4) |
 | **Parent** | `parent_cs` | `parent123` | **Sathyan K** (Ward Roll: `SSET24CS042`) |

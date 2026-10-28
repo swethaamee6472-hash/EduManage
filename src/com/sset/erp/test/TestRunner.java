@@ -7,6 +7,9 @@ import com.sset.erp.repository.FileAttendanceRepository;
 import com.sset.erp.repository.FileAssessmentRepository;
 import com.sset.erp.repository.FileFeeRepository;
 import com.sset.erp.repository.FileStudentNotificationRepository;
+import com.sset.erp.repository.FileSubjectRepository;
+import com.sset.erp.repository.FileSubjectAllocationRepository;
+import com.sset.erp.repository.FileTimetableRepository;
 import com.sset.erp.repository.UserRepository;
 import com.sset.erp.service.AuthService;
 import com.sset.erp.service.impl.AuthServiceImpl;
@@ -43,6 +46,9 @@ public class TestRunner {
         testParentWardProgressAccess();
         testDashboardAnalytics();
         testFeeManagement();
+        testTimetableAndSubjectAllocation();
+        testLinwaysClassAndSubjectAccess();
+        testPendingFeesList();
 
         System.out.println("\n----------------------------------------------------------");
         System.out.println("TEST SUMMARY: " + passed + " PASSED, " + failed + " FAILED");
@@ -499,6 +505,222 @@ public class TestRunner {
         }
     }
 
+    private static void testTimetableAndSubjectAllocation() {
+        System.out.println("\n[TEST GROUP 11] Subject Allocation & Timetable Management");
+        try {
+            Path tempDir = Files.createTempDirectory("edumanage-test-timetable-");
+            Path subjectFile = tempDir.resolve("subjects.tsv");
+            Path allocFile = tempDir.resolve("subject_allocations.tsv");
+            Path timetableFile = tempDir.resolve("timetable.tsv");
+
+            FileSubjectRepository subjectRepo = new FileSubjectRepository(subjectFile);
+            FileSubjectAllocationRepository allocRepo = new FileSubjectAllocationRepository(allocFile);
+            FileTimetableRepository timetableRepo = new FileTimetableRepository(timetableFile);
+
+            // 1. Subject validation
+            boolean invalidCreditsCaught = false;
+            try {
+                new Subject("TEST101", "Invalid Course", "CSE", 3, 0, "Theory");
+            } catch (IllegalArgumentException e) {
+                invalidCreditsCaught = true;
+            }
+            assertTrue("Subject validation rejects zero or negative credits", invalidCreditsCaught);
+
+            // 2. Subject saving & lookup
+            Subject s1 = new Subject("CST201", "Object Oriented Programming", "Computer Science & Engineering", 3, 4, "Theory");
+            Subject s2 = new Subject("CSL201", "OOP Lab", "Computer Science & Engineering", 3, 2, "Lab");
+            subjectRepo.save(s1);
+            subjectRepo.save(s2);
+
+            FileSubjectRepository subjectRepoReloaded = new FileSubjectRepository(subjectFile);
+            assertTrue("Subject persists across repository instances", subjectRepoReloaded.findByCode("CST201").isPresent());
+            assertTrue("Subject credits match persisted value", subjectRepoReloaded.findByCode("CST201").get().getCredits() == 4);
+            assertTrue("Subject repository filters by department and semester",
+                    subjectRepoReloaded.findByDepartmentAndSemester("Computer Science & Engineering", 3).size() == 2);
+
+            // 3. Subject deletion
+            subjectRepo.delete("CSL201");
+            assertTrue("Deleted subject is removed from repository", subjectRepo.findByCode("CSL201").isEmpty());
+
+            // 4. Subject Allocation
+            SubjectAllocation alloc = SubjectAllocation.create("CST201", "Object Oriented Programming",
+                    "Computer Science & Engineering", 3, "2024-2028 (CS4)", "faculty_cs", "Prof. Rajesh Kumar", "2026-2027");
+            allocRepo.save(alloc);
+
+            FileSubjectAllocationRepository allocRepoReloaded = new FileSubjectAllocationRepository(allocFile);
+            assertTrue("Subject allocation persists across repository instances",
+                    !allocRepoReloaded.findByFaculty("faculty_cs").isEmpty());
+            assertTrue("Allocation matches allocated faculty name",
+                    allocRepoReloaded.findByFaculty("faculty_cs").get(0).getFacultyName().equals("Prof. Rajesh Kumar"));
+
+            // 5. Timetable Slot Creation & Persistence
+            TimetableEntry slot1 = TimetableEntry.create("Monday", 1, "Computer Science & Engineering", 3,
+                    "2024-2028 (CS4)", "CST201", "Object Oriented Programming", "faculty_cs", "Prof. Rajesh Kumar", "LH-302");
+            timetableRepo.save(slot1);
+
+            FileTimetableRepository timetableRepoReloaded = new FileTimetableRepository(timetableFile);
+            List<TimetableEntry> foundSlots = timetableRepoReloaded.findByDepartmentSemesterAndBatch(
+                    "Computer Science & Engineering", 3, "2024-2028 (CS4)");
+            assertTrue("Timetable slot persists across repository instances", foundSlots.size() == 1);
+            assertTrue("Timetable slot period timing is calculated correctly",
+                    foundSlots.get(0).getTimeSlot().equals("09:00 - 10:00 AM"));
+
+            // 6. Conflict Detection: Faculty Conflict (same faculty double-booked)
+            boolean facultyConflictCaught = false;
+            try {
+                TimetableEntry slotConflictFaculty = TimetableEntry.create("Monday", 1, "Electronics & Communication Engineering", 3,
+                        "EC-Batch", "ECT201", "Circuits", "faculty_cs", "Prof. Rajesh Kumar", "LH-201");
+                timetableRepo.save(slotConflictFaculty);
+            } catch (TimetableConflictException e) {
+                facultyConflictCaught = "FACULTY_CONFLICT".equals(e.getConflictType());
+            }
+            assertTrue("Conflict detection prevents faculty double-booking", facultyConflictCaught);
+
+            // 7. Conflict Detection: Room Conflict (same room double-booked)
+            boolean roomConflictCaught = false;
+            try {
+                TimetableEntry slotConflictRoom = TimetableEntry.create("Monday", 1, "Mechanical Engineering", 3,
+                        "ME-Batch", "MET201", "Mechanics", "faculty_me", "Prof. Suresh", "LH-302");
+                timetableRepo.save(slotConflictRoom);
+            } catch (TimetableConflictException e) {
+                roomConflictCaught = "ROOM_CONFLICT".equals(e.getConflictType());
+            }
+            assertTrue("Conflict detection prevents classroom double-booking", roomConflictCaught);
+
+            // 8. Conflict Detection: Class Overlap Conflict (same students have 2 subjects in 1 slot)
+            boolean classConflictCaught = false;
+            try {
+                TimetableEntry slotConflictClass = TimetableEntry.create("Monday", 1, "Computer Science & Engineering", 3,
+                        "2024-2028 (CS4)", "CST203", "Data Structures", "faculty_other", "Prof. Anita", "LH-305");
+                timetableRepo.save(slotConflictClass);
+            } catch (TimetableConflictException e) {
+                classConflictCaught = "CLASS_CONFLICT".equals(e.getConflictType());
+            }
+            assertTrue("Conflict detection prevents student class schedule overlap", classConflictCaught);
+
+            // 9. Valid Non-Conflicting Slot Creation (Monday Period 2)
+            TimetableEntry slot2 = TimetableEntry.create("Monday", 2, "Computer Science & Engineering", 3,
+                    "2024-2028 (CS4)", "CST203", "Data Structures", "faculty_cs", "Prof. Rajesh Kumar", "LH-302");
+            timetableRepo.save(slot2);
+            assertTrue("Non-conflicting timetable slot saves successfully",
+                    timetableRepo.findByDepartmentSemesterAndBatch("Computer Science & Engineering", 3, "2024-2028 (CS4)").size() == 2);
+
+            // 10. Self-Update without Spurious Conflict
+            TimetableEntry updatedSlot1 = new TimetableEntry(slot1.getId(), "Monday", 1, slot1.getTimeSlot(),
+                    slot1.getDepartment(), slot1.getSemester(), slot1.getBatch(), slot1.getSubjectCode(),
+                    slot1.getSubjectName(), slot1.getFacultyUsername(), slot1.getFacultyName(), "LH-302-Renovated",
+                    java.time.LocalDateTime.now());
+            timetableRepo.save(updatedSlot1);
+            assertTrue("Editing an existing slot does not cause self-conflict",
+                    timetableRepo.findById(slot1.getId()).get().getRoomNumber().equals("LH-302-Renovated"));
+
+            // 11. Deleting a slot frees it up
+            timetableRepo.delete(slot1.getId());
+            assertTrue("Deleted timetable slot is removed", timetableRepo.findById(slot1.getId()).isEmpty());
+
+            TimetableEntry newBooking = TimetableEntry.create("Monday", 1, "Computer Science & Engineering", 3,
+                    "2024-2028 (CS4)", "CST205", "Discrete Mathematics", "faculty_cs", "Prof. Rajesh Kumar", "LH-302");
+            timetableRepo.save(newBooking);
+            assertTrue("Freed slot can be successfully re-allocated",
+                    timetableRepo.findById(newBooking.getId()).isPresent());
+
+        } catch (Exception e) {
+            assertTrue("Timetable and subject allocation test failure: " + e.getMessage(), false);
+        }
+    }
+
+    private static void testLinwaysClassAndSubjectAccess() {
+        System.out.println("\n[TEST GROUP 12] Linways Class Advisor & Cross-Class Subject Access");
+
+        // 1. Faculty Class Advisor Model Verification
+        FacultyUser faculty = new FacultyUser(
+                "F-TEST-01", "prof_linways", "pass123", "Prof. Linways", "linways@gmail.com",
+                "EMP-LW-01", "Computer Science & Engineering", "Professor",
+                "Computer Science & Engineering", 3, "2024-2028 (CS4)"
+        );
+
+        assertTrue("Faculty identifies as Class Advisor", faculty.isClassAdvisor());
+        assertTrue("Faculty advisor label matches class",
+                faculty.getAdvisorClassLabel().contains("Sem 3 2024-2028 (CS4)")
+                        && faculty.getAdvisorClassLabel().contains("Computer Science & Engineering"));
+        assertTrue("Faculty profile contains Class Advisor Of",
+                faculty.getProfileDetails().containsKey("Class Advisor Of"));
+
+        // 2. Class Isolation: Distinguish Own Class vs Other Class Allocations
+        SubjectAllocation ownClassAlloc = SubjectAllocation.create(
+                "CST201", "OOP with Java", "Computer Science & Engineering", 3, "2024-2028 (CS4)",
+                "prof_linways", "Prof. Linways", "2026-2027");
+
+        SubjectAllocation otherClassAlloc1 = SubjectAllocation.create(
+                "CST301", "Operating Systems", "Computer Science & Engineering", 5, "2023-2027 (CS3)",
+                "prof_linways", "Prof. Linways", "2026-2027");
+
+        SubjectAllocation otherClassAlloc2 = SubjectAllocation.create(
+                "CST281", "OOP Concepts", "Electronics & Communication Engineering", 3, "2024-2028 (EC1)",
+                "prof_linways", "Prof. Linways", "2026-2027");
+
+        boolean isOwn1 = ownClassAlloc.getDepartment().equalsIgnoreCase(faculty.getAdvisorDepartment())
+                && ownClassAlloc.getSemester() == faculty.getAdvisorSemester()
+                && ownClassAlloc.getBatch().equalsIgnoreCase(faculty.getAdvisorBatch());
+
+        boolean isOwn2 = otherClassAlloc1.getDepartment().equalsIgnoreCase(faculty.getAdvisorDepartment())
+                && otherClassAlloc1.getSemester() == faculty.getAdvisorSemester()
+                && otherClassAlloc1.getBatch().equalsIgnoreCase(faculty.getAdvisorBatch());
+
+        boolean isOwn3 = otherClassAlloc2.getDepartment().equalsIgnoreCase(faculty.getAdvisorDepartment())
+                && otherClassAlloc2.getSemester() == faculty.getAdvisorSemester()
+                && otherClassAlloc2.getBatch().equalsIgnoreCase(faculty.getAdvisorBatch());
+
+        assertTrue("Own class allocation correctly identified", isOwn1);
+        assertTrue("Different semester in same department recognized as other class", !isOwn2);
+        assertTrue("Different department recognized as other class", !isOwn3);
+
+        // 3. Cross-Class Attendance Recording & Isolation
+        try {
+            java.nio.file.Path tempAttFile = java.nio.file.Files.createTempFile("test-att-linways", ".tsv");
+            FileAttendanceRepository attRepo = new FileAttendanceRepository(tempAttFile);
+
+            // Record attendance for student in other class (S5 CS3)
+            AttendanceRecord recS5 = AttendanceRecord.create("SSET22CS010", "CST301 – Operating Systems", "Prof. Linways");
+            attRepo.save(recS5);
+
+            // Record attendance for student in own class (S3 CS4)
+            AttendanceRecord recS3 = AttendanceRecord.create("SSET24CS042", "CST201 – OOP with Java", "Prof. Linways");
+            attRepo.save(recS3);
+
+            List<AttendanceRecord> s5Records = attRepo.findByRollNumber("SSET22CS010");
+            assertTrue("Other class student attendance successfully logged", s5Records.size() == 1);
+            assertTrue("Other class attendance record matches subject",
+                    s5Records.get(0).getSubject().contains("CST301"));
+
+            List<AttendanceRecord> s3Records = attRepo.findByRollNumber("SSET24CS042");
+            assertTrue("Own class student attendance successfully logged", s3Records.size() == 1);
+            assertTrue("Own class attendance record matches subject",
+                    s3Records.get(0).getSubject().contains("CST201"));
+
+            // 4. Cross-Class Internal Assessment & CGPA
+            java.nio.file.Path tempAsmtFile = java.nio.file.Files.createTempFile("test-asmt-linways", ".tsv");
+            FileAssessmentRepository asmtRepo = new FileAssessmentRepository(tempAsmtFile);
+
+            AssessmentRecord asmtOther = AssessmentRecord.create(
+                    "SSET24EC008", "CST281 – OOP Concepts", "Series Test 1", 45.0, 50.0, 4, "Prof. Linways");
+            asmtRepo.save(asmtOther);
+
+            List<AssessmentRecord> ecAsmts = asmtRepo.findByRollNumber("SSET24EC008");
+            assertTrue("Other class assessment result persisted", ecAsmts.size() == 1);
+            assertTrue("Assessment percentage calculated accurately", ecAsmts.get(0).getPercentage() == 90.0);
+            assertTrue("Assessment grade evaluated accurately", "S".equals(ecAsmts.get(0).getGrade()));
+
+            AcademicPerformanceSummary summary = AcademicPerformanceSummary.from(ecAsmts);
+            assertTrue("Cross-class CGPA calculated correctly", summary.getCgpa() == 10.0);
+
+            java.nio.file.Files.deleteIfExists(tempAttFile);
+            java.nio.file.Files.deleteIfExists(tempAsmtFile);
+        } catch (Exception e) {
+            assertTrue("Linways class test error: " + e.getMessage(), false);
+        }
+    }
+
     private static void assertTrue(String testName, boolean condition) {
         if (condition) {
             System.out.println("  ✓ PASS: " + testName);
@@ -506,6 +728,90 @@ public class TestRunner {
         } else {
             System.err.println("  ✗ FAIL: " + testName);
             failed++;
+        }
+    }
+
+    private static void testPendingFeesList() {
+        System.out.println("\n[TEST GROUP 13] Pending Fees List & Overdue Tracking");
+        Path directory = null;
+        try {
+            directory = Files.createTempDirectory("edumanage-pending-fees-test-");
+            Path chargesFile = directory.resolve("fee_charges.tsv");
+            Path paymentsFile = directory.resolve("fee_payments.tsv");
+            FileFeeRepository fees = new FileFeeRepository(chargesFile, paymentsFile);
+
+            // 1. Unpaid charge (future due date)
+            FeeCharge unpaid = FeeCharge.create("STU-100", "Lab Fee", new BigDecimal("5000.00"),
+                    LocalDate.now().plusDays(10), "Admin");
+            fees.saveCharge(unpaid);
+
+            // 2. Overdue charge (past due date)
+            FeeCharge overdue = FeeCharge.create("STU-100", "Transport Fee", new BigDecimal("3000.00"),
+                    LocalDate.now().minusDays(5), "Admin");
+            fees.saveCharge(overdue);
+
+            // 3. Partially paid charge
+            FeeCharge partial = FeeCharge.create("STU-100", "Hostel Fee", new BigDecimal("10000.00"),
+                    LocalDate.now().minusDays(2), "Admin");
+            fees.saveCharge(partial);
+            fees.recordPayment(partial.getId(), new BigDecimal("4000.00"), "UPI", "Admin");
+
+            // 4. Fully paid charge
+            FeeCharge paid = FeeCharge.create("STU-100", "Tuition Fee", new BigDecimal("20000.00"),
+                    LocalDate.now().plusDays(30), "Admin");
+            fees.saveCharge(paid);
+            fees.recordPayment(paid.getId(), new BigDecimal("20000.00"), "Bank Transfer", "Admin");
+
+            List<FeeCharge> allCharges = fees.findChargesByStudent("STU-100");
+            assertTrue("Student has 4 total fee charges recorded", allCharges.size() == 4);
+
+            // Filter pending charges (balance > 0)
+            List<FeeCharge> pendingCharges = new ArrayList<>();
+            BigDecimal totalPendingBalance = BigDecimal.ZERO;
+            for (FeeCharge charge : allCharges) {
+                BigDecimal paidAmount = fees.getPaidAmount(charge.getId());
+                BigDecimal balance = charge.getAmount().subtract(paidAmount);
+                if (balance.signum() > 0) {
+                    pendingCharges.add(charge);
+                    totalPendingBalance = totalPendingBalance.add(balance);
+                }
+            }
+
+            assertTrue("Pending fees list excludes fully paid charges", pendingCharges.size() == 3);
+            assertTrue("Total pending balance matches sum of unpaid and partial balances",
+                    totalPendingBalance.compareTo(new BigDecimal("14000.00")) == 0);
+
+            // Status checks
+            BigDecimal unpaidBal = unpaid.getAmount().subtract(fees.getPaidAmount(unpaid.getId()));
+            boolean isUnpaid = unpaidBal.signum() > 0 && fees.getPaidAmount(unpaid.getId()).signum() == 0
+                    && !unpaid.getDueDate().isBefore(LocalDate.now());
+            assertTrue("Future charge with zero payment is classified as Unpaid", isUnpaid);
+
+            BigDecimal overdueBal = overdue.getAmount().subtract(fees.getPaidAmount(overdue.getId()));
+            boolean isOverdue = overdueBal.signum() > 0 && fees.getPaidAmount(overdue.getId()).signum() == 0
+                    && overdue.getDueDate().isBefore(LocalDate.now());
+            assertTrue("Past due charge with zero payment is classified as Overdue", isOverdue);
+
+            BigDecimal partialBal = partial.getAmount().subtract(fees.getPaidAmount(partial.getId()));
+            boolean isPartial = partialBal.signum() > 0 && fees.getPaidAmount(partial.getId()).signum() > 0;
+            assertTrue("Charge with partial payment is classified as Partially paid", isPartial);
+            assertTrue("Partial balance is accurately reduced", partialBal.compareTo(new BigDecimal("6000.00")) == 0);
+
+            BigDecimal fullyPaidBal = paid.getAmount().subtract(fees.getPaidAmount(paid.getId()));
+            assertTrue("Fully paid charge has zero balance", fullyPaidBal.signum() == 0);
+        } catch (Exception e) {
+            assertTrue("Pending fees operations complete without errors: " + e.getMessage(), false);
+        } finally {
+            try {
+                if (directory != null) {
+                    Files.deleteIfExists(directory.resolve("fee_charges.tsv"));
+                    Files.deleteIfExists(directory.resolve("fee_payments.tsv"));
+                    Files.deleteIfExists(directory);
+                }
+            } catch (Exception e) {
+                System.err.println("  ✗ Failed to clean pending fees test files: " + e.getMessage());
+                failed++;
+            }
         }
     }
 

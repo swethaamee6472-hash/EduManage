@@ -3,6 +3,7 @@ package com.sset.erp;
 import com.sset.erp.service.AuthService;
 import com.sset.erp.service.impl.AuthServiceImpl;
 import com.sset.erp.ui.LoginFrame;
+import com.sset.erp.util.UITheme;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -24,6 +25,9 @@ public class Main {
         } catch (Exception ignored) {
             // Fallback to default Swing Look & Feel if system L&F unavailable
         }
+
+        // Layer polished global fonts, tables, dialogs and tooltips on top of the system L&F
+        UITheme.installGlobal();
 
         // Initialize Services and Launch Login Frame on Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {

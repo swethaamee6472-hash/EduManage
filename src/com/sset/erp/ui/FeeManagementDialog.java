@@ -10,6 +10,8 @@ import com.sset.erp.repository.FileStudentNotificationRepository;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.util.UITheme;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.File;
@@ -19,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.BorderFactory;
@@ -30,32 +34,51 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
  * Administrator interface for assigning charges and recording student payments.
+ * Includes a dedicated "Pending / Overdue" tab listing all unsettled charges
+ * with colour-coded status, overdue days, and a bulk "Send Reminder" action.
  */
 public class FeeManagementDialog extends JDialog {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter DATE_ONLY   = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private final String adminName;
     private final List<StudentUser> students;
     private final FileFeeRepository repository = new FileFeeRepository();
     private final FileStudentNotificationRepository notificationRepository =
             new FileStudentNotificationRepository();
+
+    // All-fees table (hidden Fee ID column at index 8)
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new Object[] {"Student", "Roll Number", "Fee", "Amount", "Due Date", "Paid", "Balance", "Status", "Fee ID"},
             0) {
         @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
+        public boolean isCellEditable(int row, int column) { return false; }
     };
     private final JTable table = new JTable(tableModel);
+
+    // Pending-fees table (hidden Fee ID column at index 8)
+    private final DefaultTableModel pendingModel = new DefaultTableModel(
+            new Object[] {"Student", "Roll No.", "Fee Description", "Balance Due", "Due Date",
+                    "Status", "Days Overdue", "Fee ID"},
+            0) {
+        @Override
+        public boolean isCellEditable(int row, int column) { return false; }
+    };
+    private final JTable pendingTable = new JTable(pendingModel);
+
+    private final JLabel pendingSummary = new JLabel(" ");
+    private final JLabel allSummary    = new JLabel(" ");
+    private final JTabbedPane tabs = new JTabbedPane();
 
     public FeeManagementDialog(java.awt.Frame owner, String adminName, List<StudentUser> students) {
         super(owner, "Fee Management", true);
@@ -66,7 +89,7 @@ public class FeeManagementDialog extends JDialog {
     }
 
     private void initUI() {
-        setSize(1080, 590);
+        setSize(1120, 620);
         setLocationRelativeTo(getOwner());
         setLayout(new BorderLayout(12, 12));
 
@@ -76,26 +99,57 @@ public class FeeManagementDialog extends JDialog {
         heading.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
         add(heading, BorderLayout.NORTH);
 
+        // --- All Fees tab ---
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(28);
         table.setAutoCreateRowSorter(true);
-        table.removeColumn(table.getColumnModel().getColumn(8));
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table.removeColumn(table.getColumnModel().getColumn(8)); // hide Fee ID
+        JPanel allPanel = new JPanel(new BorderLayout(0, 6));
+        allPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
+        allPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        allSummary.setFont(UITheme.FONT_BODY_BOLD);
+        allSummary.setForeground(UITheme.TEXT_SECONDARY);
+        allPanel.add(allSummary, BorderLayout.SOUTH);
 
-        ModernButton addCharge = new ModernButton("Add Fee Charge", ModernButton.Variant.PRIMARY);
-        ModernButton recordPayment = new ModernButton("Record Payment", ModernButton.Variant.OUTLINE);
-        ModernButton viewHistory = new ModernButton("Payment History", ModernButton.Variant.OUTLINE);
-        ModernButton refresh = new ModernButton("Refresh", ModernButton.Variant.OUTLINE);
-        ModernButton close = new ModernButton("Close", ModernButton.Variant.OUTLINE);
+        // --- Pending / Overdue tab ---
+        pendingTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        pendingTable.setRowHeight(30);
+        pendingTable.setAutoCreateRowSorter(true);
+        pendingTable.removeColumn(pendingTable.getColumnModel().getColumn(7)); // hide Fee ID
+        pendingTable.setDefaultRenderer(Object.class, new PendingStatusRenderer());
+        JPanel pendingPanel = new JPanel(new BorderLayout(0, 6));
+        pendingPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
+        pendingPanel.add(new JScrollPane(pendingTable), BorderLayout.CENTER);
+        pendingSummary.setFont(UITheme.FONT_BODY_BOLD);
+        pendingSummary.setForeground(UITheme.DANGER);
+        pendingPanel.add(pendingSummary, BorderLayout.SOUTH);
+
+        tabs.removeAll();
+        tabs.addTab("⚠️ Pending / Overdue", pendingPanel);
+        tabs.addTab("📋 All Fee Charges", allPanel);
+        tabs.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));
+        add(tabs, BorderLayout.CENTER);
+
+        // --- Action bar ---
+        ModernButton addCharge     = new ModernButton("Add Fee Charge",  ModernButton.Variant.PRIMARY);
+        ModernButton recordPayment = new ModernButton("Record Payment",  ModernButton.Variant.OUTLINE);
+        ModernButton viewHistory   = new ModernButton("Payment History", ModernButton.Variant.OUTLINE);
+        ModernButton sendReminder  = new ModernButton("Send Reminder",   ModernButton.Variant.OUTLINE);
+        ModernButton refresh       = new ModernButton("Refresh",         ModernButton.Variant.OUTLINE);
+        ModernButton close         = new ModernButton("Close",           ModernButton.Variant.OUTLINE);
+
         addCharge.addActionListener(e -> createCharge());
         recordPayment.addActionListener(e -> recordSelectedPayment());
         viewHistory.addActionListener(e -> showSelectedHistory());
+        sendReminder.addActionListener(e -> sendPendingReminders());
         refresh.addActionListener(e -> refreshFees());
         close.addActionListener(e -> dispose());
+
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 12));
         actions.add(addCharge);
         actions.add(recordPayment);
         actions.add(viewHistory);
+        actions.add(sendReminder);
         actions.add(refresh);
         actions.add(close);
         add(actions, BorderLayout.SOUTH);
@@ -104,22 +158,101 @@ public class FeeManagementDialog extends JDialog {
     private void refreshFees() {
         try {
             tableModel.setRowCount(0);
-            for (FeeCharge charge : repository.findCharges()) {
-                BigDecimal paid = repository.getPaidAmount(charge.getId());
+            pendingModel.setRowCount(0);
+
+            List<FeeCharge> charges = repository.findCharges();
+            BigDecimal totalBalance = BigDecimal.ZERO;
+            List<String[]> pendingRows = new ArrayList<>(); // for pending tab
+
+            for (FeeCharge charge : charges) {
+                BigDecimal paid    = repository.getPaidAmount(charge.getId());
                 BigDecimal balance = charge.getAmount().subtract(paid);
+                totalBalance = totalBalance.add(balance);
+
                 String studentName = students.stream()
-                        .filter(student -> student.getRollNumber().equalsIgnoreCase(charge.getStudentRollNumber()))
+                        .filter(s -> s.getRollNumber().equalsIgnoreCase(charge.getStudentRollNumber()))
                         .map(StudentUser::getFullName).findFirst().orElse("Unknown student");
+
                 String status = balance.signum() == 0 ? "Paid"
                         : paid.signum() > 0 ? "Partially paid"
                         : charge.getDueDate().isBefore(LocalDate.now()) ? "Overdue" : "Unpaid";
+
                 tableModel.addRow(new Object[] {studentName, charge.getStudentRollNumber(),
                         charge.getDescription(), formatMoney(charge.getAmount()), charge.getDueDate(),
                         formatMoney(paid), formatMoney(balance), status, charge.getId()});
+
+                // Add to pending model when balance > 0
+                if (balance.signum() > 0) {
+                    long daysOverdue = ChronoUnit.DAYS.between(charge.getDueDate(), LocalDate.now());
+                    String pendingStatus = paid.signum() > 0 ? "Partially paid"
+                            : daysOverdue > 0 ? "Overdue" : "Unpaid";
+                    String overdueText  = daysOverdue > 0 ? "+" + daysOverdue + " days" : "-";
+                    pendingModel.addRow(new Object[] {
+                            studentName,
+                            charge.getStudentRollNumber(),
+                            charge.getDescription(),
+                            formatMoney(balance),
+                            DATE_ONLY.format(charge.getDueDate()),
+                            pendingStatus,
+                            overdueText,
+                            charge.getId()   // hidden
+                    });
+                }
             }
+
+            // Summary labels
+            long pendingCount = pendingModel.getRowCount();
+            if (pendingCount == 0) {
+                pendingSummary.setText("✅ No pending fees — all student accounts are settled.");
+                pendingSummary.setForeground(UITheme.SUCCESS);
+            } else {
+                pendingSummary.setText("⚠️  " + pendingCount + " pending charge"
+                        + (pendingCount == 1 ? "" : "s") + "  |  Total Outstanding: "
+                        + formatMoney(totalBalance));
+                pendingSummary.setForeground(UITheme.DANGER);
+            }
+            allSummary.setText(charges.size() + " charges total  |  "
+                    + pendingCount + " pending  |  Total Outstanding: " + formatMoney(totalBalance));
         } catch (IOException e) {
             showError("Unable to load fee records.", e);
         }
+    }
+
+    /** Sends a fee-reminder notification to every student with a pending balance. */
+    private void sendPendingReminders() {
+        int count = pendingModel.getRowCount();
+        if (count == 0) {
+            JOptionPane.showMessageDialog(this, "No pending fees found — nothing to remind.",
+                    "No Pending Fees", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Send fee reminder notifications to " + count + " student" + (count == 1 ? "" : "s")
+                        + " with pending fees?",
+                "Send Reminders", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        int sent = 0;
+        for (int row = 0; row < pendingModel.getRowCount(); row++) {
+            String roll    = pendingModel.getValueAt(row, 1).toString();
+            String fee     = pendingModel.getValueAt(row, 2).toString();
+            String balance = pendingModel.getValueAt(row, 3).toString();
+            String status  = pendingModel.getValueAt(row, 5).toString();
+            try {
+                notificationRepository.save(StudentNotification.create(NotificationType.FEE,
+                        roll,
+                        "Fee Payment Reminder",
+                        "Your " + fee + " fee has an outstanding balance of " + balance
+                                + " (Status: " + status + "). Please clear the dues at the earliest.",
+                        adminName));
+                sent++;
+            } catch (IOException e) {
+                // continue sending to others
+            }
+        }
+        JOptionPane.showMessageDialog(this,
+                "✅ Reminders sent to " + sent + " of " + count + " student(s).",
+                "Reminders Sent", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void createCharge() {
@@ -234,12 +367,27 @@ public class FeeManagementDialog extends JDialog {
     }
 
     private Optional<FeeCharge> selectedCharge() {
-        int viewRow = table.getSelectedRow();
+        boolean isPendingTab = (tabs.getSelectedIndex() == 0);
+        JTable activeTable = isPendingTab ? pendingTable : table;
+        int feeIdCol = isPendingTab ? 7 : 8;
+        DefaultTableModel activeModel = isPendingTab ? pendingModel : tableModel;
+        int viewRow = activeTable.getSelectedRow();
         if (viewRow < 0) {
-            return Optional.empty();
+            // Check the other table just in case user clicked in other table
+            JTable otherTable = isPendingTab ? table : pendingTable;
+            int otherFeeIdCol = isPendingTab ? 8 : 7;
+            DefaultTableModel otherModel = isPendingTab ? tableModel : pendingModel;
+            int otherViewRow = otherTable.getSelectedRow();
+            if (otherViewRow < 0) {
+                return Optional.empty();
+            }
+            activeTable = otherTable;
+            feeIdCol = otherFeeIdCol;
+            activeModel = otherModel;
+            viewRow = otherViewRow;
         }
-        int modelRow = table.convertRowIndexToModel(viewRow);
-        String id = tableModel.getValueAt(modelRow, 8).toString();
+        int modelRow = activeTable.convertRowIndexToModel(viewRow);
+        String id = activeModel.getValueAt(modelRow, feeIdCol).toString();
         try {
             return repository.findCharges().stream().filter(charge -> charge.getId().equals(id)).findFirst();
         } catch (IOException e) {
@@ -291,5 +439,28 @@ public class FeeManagementDialog extends JDialog {
 
     static String formatMoney(BigDecimal amount) {
         return "INR " + amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+    }
+
+    /** Colors rows in the Pending Fees table by status. */
+    private static class PendingStatusRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!isSelected) {
+                Object statusObj = table.getModel().getValueAt(row, 5); // Status column = index 5
+                String status = statusObj == null ? "" : statusObj.toString();
+                Color bg;
+                Color fg;
+                switch (status) {
+                    case "Overdue" -> { bg = UITheme.DANGER_BG; fg = UITheme.DANGER; }
+                    case "Partially paid" -> { bg = new Color(219, 234, 254); fg = UITheme.INFO; }
+                    default -> { bg = UITheme.WARNING_BG; fg = UITheme.WARNING; }
+                }
+                setBackground(bg);
+                setForeground(fg);
+            }
+            return this;
+        }
     }
 }

@@ -4,9 +4,11 @@ import com.sset.erp.dto.AuthResult;
 import com.sset.erp.dto.UserRegistrationDTO;
 import com.sset.erp.model.*;
 import com.sset.erp.repository.FileUserRepository;
+import com.sset.erp.repository.MysqlUserRepository;
 import com.sset.erp.repository.UserRepository;
 import com.sset.erp.service.AuthService;
 import com.sset.erp.session.SessionManager;
+import com.sset.erp.util.DatabaseConnection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,7 +23,21 @@ public class AuthServiceImpl implements AuthService {
     private final SessionManager sessionManager;
 
     public AuthServiceImpl() {
-        this(new FileUserRepository(), SessionManager.getInstance());
+        this(defaultRepository(), SessionManager.getInstance());
+    }
+
+    /**
+     * Prefers the MySQL `edumanage` database on the local SQL server;
+     * falls back to the JSON file store if the database is unreachable.
+     */
+    private static UserRepository defaultRepository() {
+        try {
+            if (DatabaseConnection.getInstance().isAvailable()) {
+                return new MysqlUserRepository();
+            }
+        } catch (Exception ignored) {}
+        System.err.println("[AuthService] MySQL unavailable - falling back to file-based user store.");
+        return new FileUserRepository();
     }
 
     public AuthServiceImpl(UserRepository userRepository, SessionManager sessionManager) {
@@ -100,7 +116,10 @@ public class AuthServiceImpl implements AuthService {
                 return new FacultyUser(
                     id, dto.getUsername(), dto.getPassword(),
                     dto.getFullName(), dto.getEmail(),
-                    dto.getEmployeeId(), dto.getDepartment(), dto.getDesignation()
+                    dto.getEmployeeId(), dto.getDepartment(), dto.getDesignation(),
+                    dto.getAdvisorDepartment() != null ? dto.getAdvisorDepartment() : dto.getDepartment(),
+                    dto.getAdvisorSemester() > 0 ? dto.getAdvisorSemester() : 3,
+                    dto.getAdvisorBatch() != null ? dto.getAdvisorBatch() : "2024-2028 (CS4)"
                 );
             case STUDENT:
                 return new StudentUser(
@@ -129,6 +148,14 @@ public class AuthServiceImpl implements AuthService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean deleteUser(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return false;
+        }
+        return userRepository.deleteById(userId);
     }
 
     @Override

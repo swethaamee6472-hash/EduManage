@@ -5,7 +5,7 @@ import com.sset.erp.model.NotificationType;
 import com.sset.erp.model.StudentNotification;
 import com.sset.erp.model.StudentUser;
 import com.sset.erp.repository.FileStudentNotificationRepository;
-import com.sset.erp.repository.FileUserRepository;
+import com.sset.erp.repository.MysqlUserRepository;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.util.UITheme;
 import java.awt.BorderLayout;
@@ -52,7 +52,7 @@ public class FacultyNotificationsDialog extends JDialog {
     public FacultyNotificationsDialog(JFrame owner, FacultyUser faculty) {
         super(owner, "Publish Student Notification", true);
         this.faculty = faculty;
-        this.students = new FileUserRepository().findAll().stream()
+        this.students = new MysqlUserRepository().findAll().stream()
                 .filter(StudentUser.class::isInstance)
                 .map(StudentUser.class::cast)
                 .toList();

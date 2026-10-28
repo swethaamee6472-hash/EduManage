@@ -8,6 +8,20 @@ SRC_DIR="$BASE_DIR/src"
 BIN_DIR="$BASE_DIR/bin"
 DATA_DIR="$BASE_DIR/data"
 
+# Ensure Java compiler and runtime are located on macOS if standard stub fails
+if ! javac -version >/dev/null 2>&1; then
+    if [ -x "/Library/Java/JavaVirtualMachines/jdk-26.jdk/Contents/Home/bin/javac" ]; then
+        export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-26.jdk/Contents/Home"
+        export PATH="$JAVA_HOME/bin:$PATH"
+    elif [ -x "/usr/libexec/java_home" ]; then
+        JH=$(/usr/libexec/java_home 2>/dev/null)
+        if [ -n "$JH" ] && [ -x "$JH/bin/javac" ]; then
+            export JAVA_HOME="$JH"
+            export PATH="$JAVA_HOME/bin:$PATH"
+        fi
+    fi
+fi
+
 mkdir -p "$BIN_DIR"
 mkdir -p "$DATA_DIR"
 
@@ -21,9 +35,9 @@ echo "Compiling Java source files..."
 LIB_CP=$(find "$BASE_DIR/lib" -name "*.jar" | tr '\n' ':')
 LIB_CP="${LIB_CP%:}"  # strip trailing colon
 
-# Collect all .java source files
+# Collect all .java source files (quote paths to support spaces in directory names)
 SOURCES_FILE="$BASE_DIR/sources.txt"
-find "$SRC_DIR" -name "*.java" > "$SOURCES_FILE"
+find "$SRC_DIR" -name "*.java" | sed 's/^/"/;s/$/"/' > "$SOURCES_FILE"
 
 # Compile
 javac -cp "$LIB_CP" -d "$BIN_DIR" "@$SOURCES_FILE"
@@ -36,6 +50,14 @@ if [ $COMPILE_EXIT -ne 0 ]; then
 fi
 
 echo "[OK] Compilation completed successfully into bin/ directory."
+
+# On macOS, build native AVFoundation Apple Silicon camera driver if swiftc is available
+if [ "$(uname -s)" = "Darwin" ] && command -v swiftc >/dev/null 2>&1; then
+    if [ ! -f "$BIN_DIR/mac_camera_stream" ] || [ "$SRC_DIR/native/mac_camera_stream.swift" -nt "$BIN_DIR/mac_camera_stream" ]; then
+        echo "Building native macOS Apple Silicon camera driver..."
+        swiftc -O "$SRC_DIR/native/mac_camera_stream.swift" -o "$BIN_DIR/mac_camera_stream" 2>/dev/null || true
+    fi
+fi
 
 if [ "$1" = "--test" ]; then
     echo ""

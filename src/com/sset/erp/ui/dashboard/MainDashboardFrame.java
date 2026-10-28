@@ -21,6 +21,7 @@ public class MainDashboardFrame extends JFrame {
     public MainDashboardFrame(AuthService authService, User currentUser) {
         this.authService = authService;
         this.currentUser = currentUser;
+        setIconImage(UITheme.createAppIcon());
         initUI();
     }
 

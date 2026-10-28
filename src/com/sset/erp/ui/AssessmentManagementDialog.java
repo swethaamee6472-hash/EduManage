@@ -7,12 +7,14 @@ import com.sset.erp.model.StudentNotification;
 import com.sset.erp.model.StudentUser;
 import com.sset.erp.repository.FileAssessmentRepository;
 import com.sset.erp.repository.FileStudentNotificationRepository;
-import com.sset.erp.repository.FileUserRepository;
+import com.sset.erp.repository.MysqlUserRepository;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.util.UITheme;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Window;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -44,11 +46,18 @@ public class AssessmentManagementDialog extends JDialog {
     private final List<StudentUser> students;
     private final DefaultTableModel tableModel;
     private final JTable table;
+    private final JComboBox<String> cmbSubjectFilter = new JComboBox<>();
+    private String currentSubjectFilter = null;
 
     public AssessmentManagementDialog(JFrame owner, FacultyUser facultyUser) {
-        super(owner, "Marks, Grade & CGPA Management", true);
+        this(owner, facultyUser, null);
+    }
+
+    public AssessmentManagementDialog(Window owner, FacultyUser facultyUser, String initialSubjectFilter) {
+        super(owner, "Marks, Grade & CGPA Management", ModalityType.APPLICATION_MODAL);
         this.facultyUser = facultyUser;
-        this.students = new FileUserRepository().findAll().stream()
+        this.currentSubjectFilter = initialSubjectFilter;
+        this.students = new MysqlUserRepository().findAll().stream()
                 .filter(StudentUser.class::isInstance)
                 .map(StudentUser.class::cast)
                 .toList();
@@ -63,19 +72,78 @@ public class AssessmentManagementDialog extends JDialog {
         };
         this.table = new JTable(tableModel);
         initUI();
+        initSubjectFilter();
         refreshRecords();
     }
 
+    private void initSubjectFilter() {
+        cmbSubjectFilter.removeAllItems();
+        cmbSubjectFilter.addItem("All Courses / Subjects");
+        try {
+            java.util.Set<String> subjects = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            for (AssessmentRecord r : repository.findAll()) {
+                if (r.getSubject() != null && !r.getSubject().isBlank()) {
+                    subjects.add(r.getSubject().trim());
+                }
+            }
+            // Also add faculty's allocated subjects
+            try {
+                for (com.sset.erp.model.SubjectAllocation a : new com.sset.erp.repository.FileSubjectAllocationRepository().findByFaculty(facultyUser.getUsername())) {
+                    subjects.add(a.getSubjectCode() + " – " + a.getSubjectName());
+                }
+            } catch (Exception ignored) {}
+
+            for (String sub : subjects) {
+                cmbSubjectFilter.addItem(sub);
+            }
+            if (currentSubjectFilter != null && !currentSubjectFilter.isBlank()) {
+                for (int i = 0; i < cmbSubjectFilter.getItemCount(); i++) {
+                    String item = cmbSubjectFilter.getItemAt(i);
+                    if (item.equalsIgnoreCase(currentSubjectFilter.trim())
+                            || item.toUpperCase().contains(currentSubjectFilter.toUpperCase())) {
+                        cmbSubjectFilter.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        cmbSubjectFilter.addActionListener(e -> {
+            if (cmbSubjectFilter.getSelectedIndex() <= 0) {
+                currentSubjectFilter = null;
+            } else {
+                currentSubjectFilter = (String) cmbSubjectFilter.getSelectedItem();
+            }
+            refreshRecords();
+        });
+    }
+
     private void initUI() {
-        setSize(1050, 560);
+        setSize(1080, 600);
         setLocationRelativeTo(getOwner());
         setLayout(new BorderLayout(12, 12));
+
+        JPanel topBar = new JPanel(new BorderLayout(12, 6));
+        topBar.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
 
         JLabel heading = new JLabel("Student Marks, Grades & CGPA", SwingConstants.LEFT);
         heading.setFont(UITheme.FONT_HEADER);
         heading.setForeground(UITheme.TEXT_PRIMARY);
-        heading.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
-        add(heading, BorderLayout.NORTH);
+
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        filterPanel.setOpaque(false);
+        JLabel lblFilter = new JLabel("Filter Course:");
+        lblFilter.setFont(UITheme.FONT_BODY_BOLD);
+        lblFilter.setForeground(UITheme.TEXT_SECONDARY);
+        cmbSubjectFilter.setFont(UITheme.FONT_BODY);
+        cmbSubjectFilter.setPreferredSize(new Dimension(280, 32));
+
+        filterPanel.add(lblFilter);
+        filterPanel.add(cmbSubjectFilter);
+
+        topBar.add(heading, BorderLayout.WEST);
+        topBar.add(filterPanel, BorderLayout.EAST);
+        add(topBar, BorderLayout.NORTH);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(28);
@@ -106,6 +174,13 @@ public class AssessmentManagementDialog extends JDialog {
         try {
             tableModel.setRowCount(0);
             for (AssessmentRecord record : repository.findAll()) {
+                if (currentSubjectFilter != null && !currentSubjectFilter.isBlank()) {
+                    String cleanFilter = currentSubjectFilter.trim().toUpperCase();
+                    String recSub = record.getSubject() == null ? "" : record.getSubject().trim().toUpperCase();
+                    if (!recSub.contains(cleanFilter) && !cleanFilter.contains(recSub)) {
+                        continue;
+                    }
+                }
                 String studentName = students.stream()
                         .filter(student -> student.getRollNumber().equalsIgnoreCase(record.getRollNumber()))
                         .map(StudentUser::getFullName)
@@ -187,7 +262,8 @@ public class AssessmentManagementDialog extends JDialog {
             }
             return label;
         });
-        JTextField subjectField = new JTextField(existing == null ? "" : existing.getSubject());
+        String defaultSub = existing != null ? existing.getSubject() : (currentSubjectFilter != null ? currentSubjectFilter : "");
+        JTextField subjectField = new JTextField(defaultSub);
         JTextField assessmentField = new JTextField(existing == null ? "" : existing.getAssessmentName());
         JTextField scoreField = new JTextField(existing == null ? "" : formatNumber(existing.getScore()));
         JTextField maximumField = new JTextField(existing == null ? "100" : formatNumber(existing.getMaximumScore()));

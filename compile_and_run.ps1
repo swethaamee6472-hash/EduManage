@@ -18,9 +18,9 @@ Write-Host "Compiling Java source files..."
 # Build lib classpath from all jars in lib\
 $libJars = (Get-ChildItem "$BASE_DIR\lib\*.jar" | ForEach-Object { $_.FullName }) -join ";"
 
-# Collect all .java source files into an argfile (one path per line)
+# Collect all .java source files into an argfile (quoted to handle spaces in paths)
 $sourcesFile = "$BASE_DIR\sources.txt"
-$javaFiles = Get-ChildItem -Recurse -Path $SRC_DIR -Filter "*.java" | ForEach-Object { $_.FullName }
+$javaFiles = Get-ChildItem -Recurse -Path $SRC_DIR -Filter "*.java" | ForEach-Object { '"' + $_.FullName + '"' }
 [System.IO.File]::WriteAllLines($sourcesFile, $javaFiles)
 
 # Compile

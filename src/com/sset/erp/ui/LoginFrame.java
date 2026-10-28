@@ -24,6 +24,7 @@ public class LoginFrame extends JFrame {
 
     public LoginFrame(AuthService authService) {
         this.authService = authService;
+        setIconImage(UITheme.createAppIcon());
         initUI();
     }
 
@@ -169,11 +170,6 @@ public class LoginFrame extends JFrame {
         btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogin.addActionListener(e -> handleLogin());
 
-        ModernButton btnRegister = new ModernButton("Register New Account", ModernButton.Variant.OUTLINE);
-        btnRegister.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-        btnRegister.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnRegister.addActionListener(e -> new RegisterDialog(LoginFrame.this, authService).setVisible(true));
-
         form.add(title);
         form.add(Box.createVerticalStrut(4));
         form.add(subtitle);
@@ -194,8 +190,6 @@ public class LoginFrame extends JFrame {
         form.add(Box.createVerticalStrut(14));
 
         form.add(btnLogin);
-        form.add(Box.createVerticalStrut(10));
-        form.add(btnRegister);
 
         // Enter key listener for instant login
         txtUsername.addActionListener(e -> handleLogin());

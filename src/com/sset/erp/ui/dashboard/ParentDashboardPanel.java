@@ -6,11 +6,14 @@ import com.sset.erp.model.AssessmentRecord;
 import com.sset.erp.model.AttendanceRecord;
 import com.sset.erp.model.AcademicPerformanceSummary;
 import com.sset.erp.model.FeeCharge;
+import com.sset.erp.model.StudentUser;
 import com.sset.erp.repository.FileAssessmentRepository;
 import com.sset.erp.repository.FileAttendanceRepository;
 import com.sset.erp.repository.FileFeeRepository;
+import com.sset.erp.repository.MysqlUserRepository;
 import com.sset.erp.ui.FeeHistoryDialog;
 import com.sset.erp.ui.ParentProgressDialog;
+import com.sset.erp.ui.StudentTimetableDialog;
 import com.sset.erp.ui.components.BadgeLabel;
 import com.sset.erp.ui.components.ModernButton;
 import com.sset.erp.ui.components.ModernCard;
@@ -102,7 +105,7 @@ public class ParentDashboardPanel extends JPanel {
         wardTitle.setFont(UITheme.FONT_HEADER);
         wardTitle.setForeground(UITheme.TEXT_PRIMARY);
 
-        JPanel statusList = new JPanel(new GridLayout(5, 1, 0, 12));
+        JPanel statusList = new JPanel(new GridLayout(6, 1, 0, 12));
         statusList.setOpaque(false);
 
         statusList.add(createStatusRow("Attendance", "Loading attendance records...", UITheme.INFO, "✅"));
@@ -120,6 +123,9 @@ public class ParentDashboardPanel extends JPanel {
             refreshStatusRows(statusList);
         });
         statusList.add(feesButton);
+        ModernButton timetableButton = new ModernButton("View Class Timetable", ModernButton.Variant.OUTLINE);
+        timetableButton.addActionListener(e -> openWardTimetable());
+        statusList.add(timetableButton);
 
         refreshStatusRows(statusList);
 
@@ -156,16 +162,32 @@ public class ParentDashboardPanel extends JPanel {
                             AcademicPerformanceSummary.from(assessments).getCgpa(),
                             earned / possible * 100.0, assessments.size());
             java.math.BigDecimal outstanding = java.math.BigDecimal.ZERO;
+            int pendingCount = 0;
             for (FeeCharge charge : feeCharges) {
-                outstanding = outstanding.add(charge.getAmount().subtract(feeRepository.getPaidAmount(charge.getId())));
+                java.math.BigDecimal bal = charge.getAmount().subtract(feeRepository.getPaidAmount(charge.getId()));
+                outstanding = outstanding.add(bal);
+                if (bal.signum() > 0) {
+                    pendingCount++;
+                }
             }
-            String feeText = feeCharges.size() + " fee charge" + (feeCharges.size() == 1 ? "" : "s")
-                    + "; INR " + outstanding.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
-                    + " outstanding";
+            String feeText;
+            Color feeColor;
+            if (pendingCount > 0) {
+                feeText = pendingCount + " pending fee" + (pendingCount == 1 ? "" : "s")
+                        + " • INR " + outstanding.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
+                        + " due";
+                feeColor = UITheme.DANGER;
+            } else if (!feeCharges.isEmpty()) {
+                feeText = "All " + feeCharges.size() + " fees settled (INR 0.00 outstanding)";
+                feeColor = UITheme.SUCCESS;
+            } else {
+                feeText = "No fee charges recorded";
+                feeColor = UITheme.INFO;
+            }
             statusList.removeAll();
             statusList.add(createStatusRow("Attendance", attendanceText, UITheme.INFO, "✅"));
             statusList.add(createStatusRow("Academic Progress", progressText, UITheme.PRIMARY, "📊"));
-            statusList.add(createStatusRow("Fees", feeText, UITheme.INFO, "💳"));
+            statusList.add(createStatusRow("Fees & Pending Dues", feeText, feeColor, "💳"));
             ModernButton progressButton = new ModernButton("View Attendance & Marks", ModernButton.Variant.PRIMARY);
             progressButton.addActionListener(e -> openWardProgress());
             statusList.add(progressButton);
@@ -175,6 +197,9 @@ public class ParentDashboardPanel extends JPanel {
                 refreshStatusRows(statusList);
             });
             statusList.add(feesButton);
+            ModernButton timetableButton = new ModernButton("View Class Timetable", ModernButton.Variant.OUTLINE);
+            timetableButton.addActionListener(e -> openWardTimetable());
+            statusList.add(timetableButton);
             statusList.revalidate();
             statusList.repaint();
         } catch (java.io.IOException e) {
@@ -190,6 +215,22 @@ public class ParentDashboardPanel extends JPanel {
     private void openWardFees() {
         new FeeHistoryDialog(SwingUtilities.getWindowAncestor(this), parentUser.getStudentRollNumber(),
                 "Ward Fees & Payment History").setVisible(true);
+    }
+
+    private void openWardTimetable() {
+        StudentUser student = new MysqlUserRepository().findAll().stream()
+                .filter(StudentUser.class::isInstance)
+                .map(StudentUser.class::cast)
+                .filter(s -> s.getRollNumber().equalsIgnoreCase(parentUser.getStudentRollNumber()))
+                .findFirst()
+                .orElse(null);
+        if (student != null) {
+            new StudentTimetableDialog((JFrame) SwingUtilities.getWindowAncestor(this),
+                    student.getDepartment(), student.getSemester(), student.getBatch(),
+                    student.getRollNumber(), student.getFullName()).setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Ward record not found for roll: " + parentUser.getStudentRollNumber(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private JPanel createStatusRow(String title, String statusText, Color color, String icon) {
